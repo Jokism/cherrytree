@@ -207,7 +207,7 @@ void CtDialogs::bookmarks_handle_dialog(CtMainWin* pCtMainWin)
     pCtMainWin->update_window_save_needed(CtSaveNeededUpdType::book);
 }
 
-// Choose the CherryTree data storage type (xml or db) and protection
+// Choose the CherryTree data storage type and protection
 bool CtDialogs::choose_data_storage_dialog(CtMainWin* pCtMainWin, CtStorageSelectArgs& args)
 {
     Gtk::Dialog dialog{_("Choose Storage Type"),
@@ -218,19 +218,19 @@ bool CtDialogs::choose_data_storage_dialog(CtMainWin* pCtMainWin, CtStorageSelec
     dialog.set_default_size(350, -1);
     dialog.set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
 
-    Glib::ustring labelPrefixSQLite{"SQLite, "};
-    Glib::ustring labelPrefixXML{"XML, "};
-    Gtk::RadioButton radiobutton_sqlite_not_protected(labelPrefixSQLite + _("Not Protected") + " (.ctb)");
+    Gtk::RadioButton radiobutton_sqlite_not_protected(Glib::ustring{"Single SQLite File"} + " (.ctb)");
     Gtk::RadioButton::Group rbGroup = radiobutton_sqlite_not_protected.get_group();
-    Gtk::RadioButton radiobutton_sqlite_pass_protected(rbGroup, labelPrefixSQLite + _("Password Protected") + " (.ctx)");
-    Gtk::RadioButton radiobutton_xml_not_protected(rbGroup, labelPrefixXML + _("Not Protected") + " (.ctd)");
-    Gtk::RadioButton radiobutton_xml_pass_protected(rbGroup, labelPrefixXML + _("Password Protected") + " (.ctz)");
+    Gtk::RadioButton radiobutton_sqlite_pass_protected(rbGroup, Glib::ustring{"Single SQLite File, 7-zip Encrypted and Password Protected"} + " (.ctx)");
+    Gtk::RadioButton radiobutton_xml_not_protected(rbGroup, Glib::ustring{"Single XML File"}  + " (.ctd)");
+    Gtk::RadioButton radiobutton_xml_pass_protected(rbGroup, Glib::ustring{"Single XML File, 7-zip Encrypted and Password Protected"} + " (.ctz)");
+    Gtk::RadioButton radiobutton_multifile(rbGroup, Glib::ustring{"Multiple Files in Hierarchical Folder Structure"});
 
     Gtk::VBox type_vbox;
     type_vbox.pack_start(radiobutton_sqlite_not_protected);
     type_vbox.pack_start(radiobutton_sqlite_pass_protected);
     type_vbox.pack_start(radiobutton_xml_not_protected);
     type_vbox.pack_start(radiobutton_xml_pass_protected);
+    type_vbox.pack_start(radiobutton_multifile);
 
     Gtk::Frame type_frame(Glib::ustring("<b>")+_("Storage Type")+"</b>");
     dynamic_cast<Gtk::Label*>(type_frame.get_label_widget())->set_use_markup(true);
