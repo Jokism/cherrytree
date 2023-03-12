@@ -225,17 +225,33 @@ bool CtDialogs::choose_data_storage_dialog(CtMainWin* pCtMainWin, CtStorageSelec
     Gtk::RadioButton radiobutton_xml_pass_protected(rbGroup, Glib::ustring{"Single XML File, 7-zip Encrypted and Password Protected"} + " (.ctz)");
     Gtk::RadioButton radiobutton_multifile(rbGroup, Glib::ustring{"Multiple Files in Hierarchical Folder Structure"});
 
-    Gtk::VBox type_vbox;
-    type_vbox.pack_start(radiobutton_sqlite_not_protected);
-    type_vbox.pack_start(radiobutton_sqlite_pass_protected);
-    type_vbox.pack_start(radiobutton_xml_not_protected);
-    type_vbox.pack_start(radiobutton_xml_pass_protected);
-    type_vbox.pack_start(radiobutton_multifile);
+    Gtk::Image* image_sqlite_not_protected = pCtMainWin->new_managed_image_from_stock("ct_db", Gtk::ICON_SIZE_MENU);
+    Gtk::Image* image_sqlite_pass_protected = pCtMainWin->new_managed_image_from_stock("ct_7zip", Gtk::ICON_SIZE_MENU);
+    Gtk::Image* image_xml_not_protected = pCtMainWin->new_managed_image_from_stock("ct_xml", Gtk::ICON_SIZE_MENU);
+    Gtk::Image* image_xml_pass_protected = pCtMainWin->new_managed_image_from_stock("ct_7zip", Gtk::ICON_SIZE_MENU);
+    Gtk::Image* image_multifile = pCtMainWin->new_managed_image_from_stock("ct_directory", Gtk::ICON_SIZE_MENU);
+
+    auto grid_type = Gtk::manage(new Gtk::Grid{});
+    grid_type->set_row_spacing(2);
+    grid_type->set_column_spacing(4);
+    grid_type->set_row_homogeneous(true);
+
+    grid_type->attach(*image_sqlite_not_protected,          0, 0, 1, 1);
+    grid_type->attach(*image_sqlite_pass_protected,         0, 1, 1, 1);
+    grid_type->attach(*image_xml_not_protected,             0, 2, 1, 1);
+    grid_type->attach(*image_xml_pass_protected,            0, 3, 1, 1);
+    grid_type->attach(*image_multifile,                     0, 4, 1, 1);
+
+    grid_type->attach(radiobutton_sqlite_not_protected,     1, 0, 1, 1);
+    grid_type->attach(radiobutton_sqlite_pass_protected,    1, 1, 1, 1);
+    grid_type->attach(radiobutton_xml_not_protected,        1, 2, 1, 1);
+    grid_type->attach(radiobutton_xml_pass_protected,       1, 3, 1, 1);
+    grid_type->attach(radiobutton_multifile,                1, 4, 1, 1);
 
     Gtk::Frame type_frame(Glib::ustring("<b>")+_("Storage Type")+"</b>");
     dynamic_cast<Gtk::Label*>(type_frame.get_label_widget())->set_use_markup(true);
     type_frame.set_shadow_type(Gtk::SHADOW_NONE);
-    type_frame.add(type_vbox);
+    type_frame.add(*grid_type);
 
     Gtk::Entry entry_passw_1;
     entry_passw_1.set_visibility(false);
@@ -302,6 +318,8 @@ bool CtDialogs::choose_data_storage_dialog(CtMainWin* pCtMainWin, CtStorageSelec
 
     Gtk::Box* pContentArea = dialog.get_content_area();
     pContentArea->set_spacing(5);
+    pContentArea->set_margin_left(5);
+    pContentArea->set_margin_right(5);
     pContentArea->pack_start(type_frame);
     pContentArea->pack_start(passw_frame);
     if (args.showAutosaveOptions) {
