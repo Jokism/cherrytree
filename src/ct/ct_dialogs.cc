@@ -278,6 +278,9 @@ bool CtDialogs::choose_data_storage_dialog(CtMainWin* pCtMainWin, CtStorageSelec
         else if (args.ctDocType == CtDocType::XML) {
             radiobutton_xml_not_protected.set_active(true);
         }
+        else if (args.ctDocType == CtDocType::MultiFile) {
+            radiobutton_multifile.set_active(true);
+        }
     }
     else if (args.ctDocEncrypt == CtDocEncrypt::True) {
         passw_frame.set_sensitive(true);
@@ -354,6 +357,8 @@ bool CtDialogs::choose_data_storage_dialog(CtMainWin* pCtMainWin, CtStorageSelec
     radiobutton_sqlite_not_protected.signal_toggled().connect(on_radiobutton_savetype_toggled);
     radiobutton_sqlite_pass_protected.signal_toggled().connect(on_radiobutton_savetype_toggled);
     radiobutton_xml_not_protected.signal_toggled().connect(on_radiobutton_savetype_toggled);
+    radiobutton_xml_pass_protected.signal_toggled().connect(on_radiobutton_savetype_toggled);
+    radiobutton_multifile.signal_toggled().connect(on_radiobutton_savetype_toggled);
     dialog.signal_key_press_event().connect(on_key_press_edit_data_storage_type_dialog, false/*call me before other*/);
 
     const int response = dialog.run();
@@ -361,12 +366,18 @@ bool CtDialogs::choose_data_storage_dialog(CtMainWin* pCtMainWin, CtStorageSelec
 
     bool retVal{Gtk::RESPONSE_ACCEPT == response};
     if (retVal) {
-        args.ctDocType = (radiobutton_xml_not_protected.get_active() || radiobutton_xml_pass_protected.get_active() ?
-                         CtDocType::XML : CtDocType::SQLite);
-        args.ctDocEncrypt = (radiobutton_sqlite_pass_protected.get_active() || radiobutton_xml_pass_protected.get_active() ?
-                            CtDocEncrypt::True : CtDocEncrypt::False);
-        if (CtDocEncrypt::True == args.ctDocEncrypt)
-        {
+        if (radiobutton_multifile.get_active()) {
+            args.ctDocType = CtDocType::MultiFile;
+        }
+        else if (radiobutton_xml_not_protected.get_active() or radiobutton_xml_pass_protected.get_active()) {
+            args.ctDocType = CtDocType::XML;
+        }
+        else {
+            args.ctDocType = CtDocType::SQLite;
+        }
+        args.ctDocEncrypt = radiobutton_sqlite_pass_protected.get_active() or radiobutton_xml_pass_protected.get_active() ?
+                            CtDocEncrypt::True : CtDocEncrypt::False;
+        if (CtDocEncrypt::True == args.ctDocEncrypt) {
             args.password = entry_passw_1.get_text();
             if (args.password.empty()) {
                 error_dialog(_("The Password Fields Must be Filled."), *pCtMainWin);

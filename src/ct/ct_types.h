@@ -42,7 +42,7 @@ class path;
 
 enum class CtYesNoCancel { Yes, No, Cancel };
 
-enum class CtDocType { None, XML, SQLite };
+enum class CtDocType { None, XML, SQLite, MultiFile };
 
 enum class CtDocEncrypt { None, True, False };
 
