@@ -1,7 +1,7 @@
 /*
  * ct_storage_sqlite.h
  *
- * Copyright 2009-2021
+ * Copyright 2009-2023
  * Giuseppe Penone <giuspen@gmail.com>
  * Evgenii Gurianov <https://github.com/txe>
  *
@@ -39,7 +39,9 @@ class CtStorageCache;
 class CtStorageSqlite : public CtStorageEntity
 {
 public:
-    CtStorageSqlite(CtMainWin* pCtMainWin);
+    CtStorageSqlite(CtMainWin* pCtMainWin)
+     : _pCtMainWin{pCtMainWin}
+    {}
     ~CtStorageSqlite();
 
     void close_connect() override;

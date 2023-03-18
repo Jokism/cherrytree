@@ -33,22 +33,6 @@
 #include "ct_storage_control.h"
 #include "ct_logging.h"
 
-CtStorageXml::CtStorageXml(CtMainWin* pCtMainWin) : _pCtMainWin(pCtMainWin)
-{
-}
-
-void CtStorageXml::close_connect()
-{
-}
-
-void CtStorageXml::reopen_connect()
-{
-}
-
-void CtStorageXml::test_connection()
-{
-}
-
 bool CtStorageXml::populate_treestore(const fs::path& file_path, Glib::ustring& error)
 {
     try {
@@ -141,10 +125,6 @@ bool CtStorageXml::save_treestore(const fs::path& file_path,
         error = e.what();
         return false;
     }
-}
-
-void CtStorageXml::vacuum()
-{
 }
 
 void CtStorageXml::import_nodes(const fs::path& path, const Gtk::TreeIter& parent_iter)
@@ -289,11 +269,6 @@ std::unique_ptr<xmlpp::DomParser> CtStorageXml::_get_parser(const fs::path& file
         throw std::runtime_error("document contains the wrong node root");
     }
     return parser;
-}
-
-
-CtStorageXmlHelper::CtStorageXmlHelper(CtMainWin* pCtMainWin) : _pCtMainWin(pCtMainWin)
-{
 }
 
 xmlpp::Element* CtStorageXmlHelper::node_to_xml(CtTreeIter* ct_tree_iter,

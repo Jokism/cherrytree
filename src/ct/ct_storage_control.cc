@@ -25,6 +25,7 @@
 #include "ct_storage_control.h"
 #include "ct_storage_xml.h"
 #include "ct_storage_sqlite.h"
+#include "ct_storage_multifile.h"
 #include "ct_p7za_iface.h"
 #include "ct_main_win.h"
 #include "ct_logging.h"
@@ -34,10 +35,16 @@
 
 std::unique_ptr<CtStorageEntity> get_entity_by_type(CtMainWin* pCtMainWin, CtDocType file_type)
 {
-    if (file_type == CtDocType::SQLite) {
+    if (CtDocType::SQLite == file_type) {
         return std::make_unique<CtStorageSqlite>(pCtMainWin);
     }
-    return std::make_unique<CtStorageXml>(pCtMainWin);
+    if (CtDocType::XML == file_type) {
+        return std::make_unique<CtStorageXml>(pCtMainWin);
+    }
+    if (CtDocType::MultiFile == file_type) {
+        return std::make_unique<CtStorageMultiFile>(pCtMainWin);
+    }
+    return nullptr;
 }
 
 /*static*/CtStorageControl* CtStorageControl::create_dummy_storage(CtMainWin* pCtMainWin)

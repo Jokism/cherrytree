@@ -43,12 +43,14 @@ class CtStorageCache;
 class CtStorageXml : public CtStorageEntity
 {
 public:
-    CtStorageXml(CtMainWin* pCtMainWin);
-    ~CtStorageXml() = default;
+    CtStorageXml(CtMainWin* pCtMainWin)
+     : _pCtMainWin{pCtMainWin}
+    {}
 
-    void close_connect() override;
-    void reopen_connect() override;
-    void test_connection() override;
+    void close_connect() override {}
+    void reopen_connect() override {}
+    void test_connection() override {}
+    void vacuum() override {}
 
     bool populate_treestore(const fs::path& file_path, Glib::ustring& error) override;
     bool save_treestore(const fs::path& file_path,
@@ -57,7 +59,6 @@ public:
                         const CtExporting exporting = CtExporting::NONE,
                         const int start_offset = 0,
                         const int end_offset = -1) override;
-    void vacuum() override;
     void import_nodes(const fs::path& path, const Gtk::TreeIter& parent_iter) override;
 
     Glib::RefPtr<Gsv::Buffer> get_delayed_text_buffer(const gint64& node_id,
@@ -74,7 +75,7 @@ private:
     std::unique_ptr<xmlpp::DomParser> _get_parser(const fs::path& file_path);
 
 private:
-    CtMainWin* _pCtMainWin{nullptr};
+    CtMainWin* const _pCtMainWin;
     mutable std::map<gint64, std::shared_ptr<xmlpp::Document>> _delayed_text_buffers;
 };
 
@@ -82,7 +83,9 @@ private:
 class CtStorageXmlHelper
 {
 public:
-    CtStorageXmlHelper(CtMainWin* pCtMainWin);
+    CtStorageXmlHelper(CtMainWin* pCtMainWin)
+     : _pCtMainWin{pCtMainWin}
+    {}
 
     xmlpp::Element* node_to_xml(CtTreeIter* ct_tree_iter,
                                 xmlpp::Element* p_node_parent,
@@ -127,7 +130,7 @@ private:
     CtAnchoredWidget* _create_table_from_xml(xmlpp::Element* xml_element, int charOffset, const Glib::ustring& justification);
 
 private:
-    CtMainWin* _pCtMainWin;
+    CtMainWin* const _pCtMainWin;
 };
 
 namespace CtXmlHelper {

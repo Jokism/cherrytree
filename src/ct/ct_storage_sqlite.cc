@@ -165,11 +165,6 @@ bool CtStorageSqlite::_check_database_integrity()
     return false;
 }
 
-CtStorageSqlite::CtStorageSqlite(CtMainWin* pCtMainWin)
- : _pCtMainWin{pCtMainWin}
-{
-}
-
 CtStorageSqlite::~CtStorageSqlite()
 {
     _close_db();
