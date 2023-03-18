@@ -46,18 +46,10 @@ public:
     static bool document_integrity_check_pass(CtMainWin* pCtMainWin,
                                               const fs::path& file_path,
                                               Glib::ustring& error);
+
     virtual ~CtStorageControl();
 
-public:
     bool save(bool need_vacuum, Glib::ustring& error);
-
-private:
-    CtStorageControl(CtMainWin* pCtMainWin);
-
-    static fs::path _extract_file(CtMainWin* pCtMainWin, const fs::path& file_path, Glib::ustring& password);
-    static bool     _package_file(const fs::path& file_from, const fs::path& file_to, const Glib::ustring& password);
-
-public:
     Glib::RefPtr<Gsv::Buffer> get_delayed_text_buffer(const gint64& node_id,
                                                       const std::string& syntax,
                                                       std::list<CtAnchoredWidget*>& widgets) const;
@@ -85,6 +77,12 @@ public:
     void add_nodes_from_storage(const fs::path& path, Gtk::TreeIter parent_iter);
 
 private:
+    static std::unique_ptr<CtStorageEntity> _get_entity_by_type(CtMainWin* pCtMainWin, CtDocType file_type);
+    static fs::path _extract_file(CtMainWin* pCtMainWin, const fs::path& file_path, Glib::ustring& password);
+    static bool     _package_file(const fs::path& file_from, const fs::path& file_to, const Glib::ustring& password);
+
+    CtStorageControl(CtMainWin* pCtMainWin);
+
     CtMainWin*                 const _pCtMainWin;
     CtConfig*                  const _pCtConfig;
     fs::path                         _file_path;
@@ -94,7 +92,6 @@ private:
     std::unique_ptr<CtStorageEntity> _storage;
     CtStorageSyncPending             _syncPending;
 
-private:
     struct CtBackupEncryptData {
         bool needBackup;
         bool needEncrypt;

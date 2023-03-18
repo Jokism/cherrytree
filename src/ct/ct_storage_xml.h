@@ -52,6 +52,8 @@ public:
     void test_connection() override {}
     void vacuum() override {}
 
+    static std::unique_ptr<xmlpp::DomParser> get_parser(const fs::path& file_path);
+
     bool populate_treestore(const fs::path& file_path, Glib::ustring& error) override;
     bool save_treestore(const fs::path& file_path,
                         const CtStorageSyncPending& syncPending,
@@ -72,13 +74,11 @@ private:
                        const CtExporting exporting = CtExporting::NONE,
                        const int start_offset = 0,
                        const int end_offset =-1);
-    std::unique_ptr<xmlpp::DomParser> _get_parser(const fs::path& file_path);
 
 private:
     CtMainWin* const _pCtMainWin;
     mutable std::map<gint64, std::shared_ptr<xmlpp::Document>> _delayed_text_buffers;
 };
-
 
 class CtStorageXmlHelper
 {

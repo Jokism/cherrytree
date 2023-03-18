@@ -33,7 +33,7 @@
 
 //#define DEBUG_BACKUP_ENCRYPT
 
-std::unique_ptr<CtStorageEntity> get_entity_by_type(CtMainWin* pCtMainWin, CtDocType file_type)
+/*static*/std::unique_ptr<CtStorageEntity> CtStorageControl::_get_entity_by_type(CtMainWin* pCtMainWin, CtDocType file_type)
 {
     if (CtDocType::SQLite == file_type) {
         return std::make_unique<CtStorageSqlite>(pCtMainWin);
@@ -73,7 +73,7 @@ std::unique_ptr<CtStorageEntity> get_entity_by_type(CtMainWin* pCtMainWin, CtDoc
         }
 
         // choose storage type
-        storage = get_entity_by_type(pCtMainWin, fs::get_doc_type(file_path));
+        storage = CtStorageControl::_get_entity_by_type(pCtMainWin, fs::get_doc_type(file_path));
 
         // load from file
         if (not storage->populate_treestore(extracted_file_path, error)) throw std::runtime_error(error);
@@ -99,7 +99,7 @@ std::unique_ptr<CtStorageEntity> get_entity_by_type(CtMainWin* pCtMainWin, CtDoc
 
 /*static*/bool CtStorageControl::document_integrity_check_pass(CtMainWin* pCtMainWin, const fs::path& file_path, Glib::ustring& error)
 {
-    std::unique_ptr<CtStorageEntity> storage = get_entity_by_type(pCtMainWin, fs::get_doc_type(file_path));
+    std::unique_ptr<CtStorageEntity> storage = CtStorageControl::_get_entity_by_type(pCtMainWin, fs::get_doc_type(file_path));
     storage->set_is_dry_run();
     return storage->populate_treestore(file_path, error);
 }
@@ -118,29 +118,36 @@ std::unique_ptr<CtStorageEntity> get_entity_by_type(CtMainWin* pCtMainWin, CtDoc
 
     std::unique_ptr<CtStorageEntity> storage;
     fs::path extracted_file_path = file_path;
+    const CtDocType doc_type = fs::get_doc_type(file_path);
+
+    auto f_cleanup = [&](){
+        if (CtDocType::MultiFile == doc_type) {
+            if (fs::is_directory(file_path)) fs::remove_all(file_path);
+        }
+        else {
+            if (fs::is_regular_file(file_path)) fs::remove(file_path);
+            if (fs::is_regular_file(extracted_file_path)) fs::remove(extracted_file_path);
+        }
+    };
+
     try {
         if (fs::get_doc_encrypt(file_path) == CtDocEncrypt::True) {
             extracted_file_path = pCtMainWin->get_ct_tmp()->getHiddenFilePath(file_path);
         }
-        if (fs::is_regular_file(file_path)) {
-            fs::remove(file_path);
-        }
-        if (fs::is_regular_file(extracted_file_path)) {
-            fs::remove(extracted_file_path);
-        }
+        f_cleanup();
 
-        storage = get_entity_by_type(pCtMainWin, fs::get_doc_type(file_path));
+        storage = CtStorageControl::_get_entity_by_type(pCtMainWin, doc_type);
         // will save all data because it's the first time
         CtStorageSyncPending fakePending;
         if (not storage->save_treestore(extracted_file_path, fakePending, error, exporting, start_offset, end_offset)) {
             throw std::runtime_error(error);
         }
         // encrypt the file
-        if (file_path != extracted_file_path)
-        {
+        if (file_path != extracted_file_path) {
             storage->close_connect(); // temporary, because of sqlite keeping the file
-            if (!_package_file(extracted_file_path, file_path, password))
+            if (not _package_file(extracted_file_path, file_path, password)) {
                 throw std::runtime_error("couldn't encrypt the file");
+            }
             storage->reopen_connect();
         }
 
@@ -154,8 +161,7 @@ std::unique_ptr<CtStorageEntity> get_entity_by_type(CtMainWin* pCtMainWin, CtDoc
         return doc;
     }
     catch (std::exception& e) {
-        if (fs::is_regular_file(file_path)) fs::remove(file_path);
-        if (fs::is_regular_file(extracted_file_path)) fs::remove(extracted_file_path);
+        f_cleanup();
 
         spdlog::error(e.what());
         error = e.what();
@@ -564,7 +570,7 @@ void CtStorageControl::add_nodes_from_storage(const fs::path& path, Gtk::TreeIte
         }
     }
 
-    std::unique_ptr<CtStorageEntity> storage = get_entity_by_type(_pCtMainWin, fs::get_doc_type(extracted_file_path));
+    std::unique_ptr<CtStorageEntity> storage = CtStorageControl::_get_entity_by_type(_pCtMainWin, fs::get_doc_type(extracted_file_path));
     storage->import_nodes(extracted_file_path, parent_iter);
 
     _pCtMainWin->get_tree_store().nodes_sequences_fix(parent_iter, false);

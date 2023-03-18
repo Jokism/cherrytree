@@ -37,10 +37,10 @@ bool CtStorageXml::populate_treestore(const fs::path& file_path, Glib::ustring& 
 {
     try {
         // open file
-        auto parser = _get_parser(file_path);
+        std::unique_ptr<xmlpp::DomParser> parser = CtStorageXml::get_parser(file_path);
 
         // read bookmarks
-        for (xmlpp::Node* xml_node :  parser->get_document()->get_root_node()->get_children("bookmarks")) {
+        for (xmlpp::Node* xml_node : parser->get_document()->get_root_node()->get_children("bookmarks")) {
             Glib::ustring bookmarks_csv = static_cast<xmlpp::Element*>(xml_node)->get_attribute_value("list");
             for (auto nodeId : CtStrUtil::gstring_split_to_int64(bookmarks_csv.c_str(), ",")) {
                 if (not _isDryRun) {
@@ -129,7 +129,7 @@ bool CtStorageXml::save_treestore(const fs::path& file_path,
 
 void CtStorageXml::import_nodes(const fs::path& path, const Gtk::TreeIter& parent_iter)
 {
-    auto parser = _get_parser(path);
+    std::unique_ptr<xmlpp::DomParser> parser = CtStorageXml::get_parser(path);
 
     std::function<void(xmlpp::Element*, const gint64 sequence, Gtk::TreeIter)> recursive_import_func;
     recursive_import_func = [this, &recursive_import_func](xmlpp::Element* xml_element, const gint64 sequence, Gtk::TreeIter parent_iter) {
@@ -242,7 +242,7 @@ void CtStorageXml::_nodes_to_xml(CtTreeIter* ct_tree_iter,
     }
 }
 
-std::unique_ptr<xmlpp::DomParser> CtStorageXml::_get_parser(const fs::path& file_path)
+/*static*/std::unique_ptr<xmlpp::DomParser> CtStorageXml::get_parser(const fs::path& file_path)
 {
     // open file
     auto parser = std::make_unique<xmlpp::DomParser>();
