@@ -110,11 +110,11 @@ class CtImagePng;
 class CtStorageCache
 {
 public:
-    void generate_cache(CtMainWin* pCtMainWin, const CtStorageSyncPending* pending, bool xml);
-
-    void parallel_fetch_pixbufers(const std::vector<CtImagePng*>& image_widgets, bool xml);
+    void generate_cache(CtMainWin* pCtMainWin, const CtStorageSyncPending* pending, bool for_xml);
     bool get_cached_image(CtImagePng* image, std::string& cached_image);
 
 private:
+    void _parallel_fetch_pixbufers(const std::vector<CtImagePng*>& image_widgets, bool for_xml);
+
     std::map<CtImagePng*, std::string> _cached_images;
 };

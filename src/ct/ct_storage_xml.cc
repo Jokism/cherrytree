@@ -100,7 +100,7 @@ bool CtStorageXml::save_treestore(const fs::path& file_path,
         }
 
         CtStorageCache storage_cache;
-        storage_cache.generate_cache(_pCtMainWin, nullptr, true);
+        storage_cache.generate_cache(_pCtMainWin, nullptr, true/*for_xml*/);
 
         // save nodes
         if ( CtExporting::NONE == exporting or

@@ -54,7 +54,7 @@ public:
                         const CtExporting exporting = CtExporting::NONE,
                         const int start_offset = 0,
                         const int end_offset = -1) override;
-    void import_nodes(const fs::path& path, const Gtk::TreeIter& parent_iter) override;
+    void import_nodes(const fs::path& file_path, const Gtk::TreeIter& parent_iter) override;
 
     Glib::RefPtr<Gsv::Buffer> get_delayed_text_buffer(const gint64& node_id,
                                                       const std::string& syntax,

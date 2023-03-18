@@ -237,7 +237,7 @@ private:
 
 struct CtStorageNodeState
 {
-    bool upd{false};
+    bool is_update_of_existing{false};
     bool prop{false};
     bool buff{false};
     bool hier{false};

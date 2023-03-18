@@ -279,13 +279,13 @@ bool CtStorageSqlite::save_treestore(const fs::path& file_path,
                 _write_bookmarks_to_db(_pCtMainWin->get_tree_store().bookmarks_get());
             }
             CtStorageNodeState node_state;
-            node_state.upd = false; // no need to delete the prev data
+            node_state.is_update_of_existing = false; // no need to delete the prev data
             node_state.prop = true;
             node_state.buff = true;
             node_state.hier = true;
 
             CtStorageCache storage_cache;
-            storage_cache.generate_cache(_pCtMainWin, nullptr/*all nodes*/, false);
+            storage_cache.generate_cache(_pCtMainWin, nullptr/*all nodes*/, false/*for_xml*/);
 
             // function to iterate through the tree
             std::function<void(CtTreeIter, const gint64, const gint64)> save_node_fun;
@@ -322,9 +322,9 @@ bool CtStorageSqlite::save_treestore(const fs::path& file_path,
             }
         }
         // or need just update some info
-        else  {
+        else {
             CtStorageCache storage_cache;
-            storage_cache.generate_cache(_pCtMainWin, &syncPending, false);
+            storage_cache.generate_cache(_pCtMainWin, &syncPending, false/*for_xml*/);
 
             // check db tables columns (for document created with old version)
             if (syncPending.fix_db_tables) {
@@ -346,7 +346,6 @@ bool CtStorageSqlite::save_treestore(const fs::path& file_path,
                 _remove_db_node_with_children(node_id);
             }
         }
-
         return true;
     }
     catch (std::exception& e) {
@@ -527,15 +526,13 @@ void CtStorageSqlite::_image_from_db(const gint64& nodeId, std::list<CtAnchoredW
 void CtStorageSqlite::_codebox_from_db(const gint64& nodeId ,std::list<CtAnchoredWidget*>& anchoredWidgets) const
 {
     Sqlite3StmtAuto stmt{_pDb, "SELECT * FROM codebox WHERE node_id=? ORDER BY offset ASC"};
-    if (stmt.is_bad())
-    {
+    if (stmt.is_bad()) {
         spdlog::error("{}: {}", ERR_SQLITE_PREPV2, sqlite3_errmsg(_pDb));
         return;
     }
     sqlite3_bind_int64(stmt, 1, nodeId);
 
-    while (SQLITE_ROW == sqlite3_step(stmt))
-    {
+    while (SQLITE_ROW == sqlite3_step(stmt)) {
         int charOffset = sqlite3_column_int64(stmt, 1);
         Glib::ustring justification = safe_sqlite3_column_text(stmt, 2);
         if (justification.empty()) justification = CtConst::TAG_PROP_VAL_LEFT;
@@ -618,8 +615,7 @@ void CtStorageSqlite::_write_bookmarks_to_db(const std::list<gint64>& bookmarks)
         throw std::runtime_error(ERR_SQLITE_PREPV2 + sqlite3_errmsg(_pDb));
 
     gint64 sequence{0};
-    for (gint64 bookmark : bookmarks)
-    {
+    for (gint64 bookmark : bookmarks) {
         ++sequence;
         sqlite3_bind_int64(stmt, 1, bookmark);
         sqlite3_bind_int64(stmt, 2, sequence);
@@ -656,13 +652,12 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
         exclude_from_search |= 0x02;
     }
 
-    bool remove_prev_widgets = node_state.upd && node_state.buff;
-    bool remove_prev_node = node_state.upd && node_state.buff && node_state.prop;
-    bool remove_prev_hier = node_state.upd && node_state.hier;
+    bool remove_prev_widgets = node_state.is_update_of_existing and node_state.buff;
+    bool remove_prev_node = node_state.is_update_of_existing and node_state.buff && node_state.prop;
+    bool remove_prev_hier = node_state.is_update_of_existing and node_state.hier;
 
     // remove previous data in case full update (skip when add new or partial update
-    if (remove_prev_widgets)
-    {
+    if (remove_prev_widgets) {
         _exec_bind_int64(TABLE_CODEBOX_DELETE, node_id);
         _exec_bind_int64(TABLE_TABLE_DELETE, node_id);
         _exec_bind_int64(TABLE_IMAGE_DELETE, node_id);
@@ -677,8 +672,7 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
     bool has_image{false};
 
     // write hier
-    if (node_state.hier)
-    {
+    if (node_state.hier) {
         Sqlite3StmtAuto stmt{_pDb, TABLE_CHILDREN_INSERT};
         if (stmt.is_bad())
             throw std::runtime_error(ERR_SQLITE_PREPV2 + sqlite3_errmsg(_pDb));
@@ -690,14 +684,11 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
     }
 
     // write widgets
-    if (node_state.buff && (is_richtxt & 0x01))
-    {
-        for (CtAnchoredWidget* pAnchoredWidget : ct_tree_iter->get_anchored_widgets(start_offset, end_offset))
-        {
+    if (node_state.buff && (is_richtxt & 0x01)) {
+        for (CtAnchoredWidget* pAnchoredWidget : ct_tree_iter->get_anchored_widgets(start_offset, end_offset)) {
             if (!pAnchoredWidget->to_sqlite(_pDb, node_id, start_offset >= 0 ? -start_offset : 0, storage_cache))
                 throw std::runtime_error("couldn't save widget");
-            switch (pAnchoredWidget->get_type())
-            {
+            switch (pAnchoredWidget->get_type()) {
                 case CtAnchWidgType::CodeBox: has_codebox = true; break;
                 case CtAnchWidgType::TableLight:
                 case CtAnchWidgType::TableHeavy: has_table = true; break;
@@ -707,8 +698,7 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
     }
 
     // if only node prop to write
-    if (node_state.prop && !node_state.buff)
-    {
+    if (node_state.prop && !node_state.buff) {
         Sqlite3StmtAuto stmt{_pDb, "UPDATE node SET name=?, syntax=?, tags=?, is_ro=?, is_richtxt=?, level=? WHERE node_id=?"};
         if (stmt.is_bad())
             throw std::runtime_error(ERR_SQLITE_PREPV2 + sqlite3_errmsg(_pDb));
@@ -727,20 +717,17 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
             throw std::runtime_error(ERR_SQLITE_STEP + sqlite3_errmsg(_pDb));
     }
     // write node buffer and node prop too
-    else if (node_state.buff)
-    {
+    else if (node_state.buff) {
         // get buffer content
         std::string node_txt;
-        if (is_richtxt & 0x01)
-        {
+        if (is_richtxt & 0x01) {
             xmlpp::Document xml_doc;
             xml_doc.create_root_node("node");
             CtStorageXmlHelper{_pCtMainWin}.save_buffer_no_widgets_to_xml(xml_doc.get_root_node(),
                 ct_tree_iter->get_node_text_buffer(), start_offset, end_offset, 'n');
             node_txt = xml_doc.write_to_string();
         }
-        else
-        {
+        else {
             const auto text_buffer = ct_tree_iter->get_node_text_buffer();
             if (end_offset < 0) {
                 node_txt = text_buffer->get_text();
@@ -751,8 +738,7 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
         }
 
         // full node rewrite (buf + prop)
-        if (node_state.prop)
-        {
+        if (node_state.prop) {
             Sqlite3StmtAuto stmt{_pDb, TABLE_NODE_INSERT};
             if (stmt.is_bad())
                 throw std::runtime_error(ERR_SQLITE_PREPV2 + sqlite3_errmsg(_pDb));
@@ -777,8 +763,7 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
                 throw std::runtime_error(ERR_SQLITE_STEP + sqlite3_errmsg(_pDb));
         }
         // only node buff rewrite
-        else
-        {
+        else {
             Sqlite3StmtAuto stmt{_pDb, "UPDATE node SET txt=?, syntax=?, is_richtxt=?, has_codebox=?, has_table=?, has_image=?, ts_lastsave=? WHERE node_id=?"};
             if (stmt.is_bad())
                 throw std::runtime_error(ERR_SQLITE_PREPV2 + sqlite3_errmsg(_pDb));
@@ -827,8 +812,7 @@ void CtStorageSqlite::_remove_db_node_with_children(const gint64 node_id)
 void CtStorageSqlite::_exec_no_callback(const char* sqlCmd)
 {
     char *p_err_msg{nullptr};
-    if (SQLITE_OK != sqlite3_exec(_pDb, sqlCmd, nullptr, nullptr, &p_err_msg))
-    {
+    if (SQLITE_OK != sqlite3_exec(_pDb, sqlCmd, nullptr, nullptr, &p_err_msg)) {
         std::string msg = std::string("!! sqlite3 '") + sqlCmd + "': " + p_err_msg;
         sqlite3_free(p_err_msg);
         throw std::runtime_error(msg);
@@ -878,7 +862,6 @@ std::unordered_set<std::string> CtStorageSqlite::_get_table_field_names(std::str
         std::string name = safe_sqlite3_column_text(stmt, 1);
         fields.emplace(std::move(name));
     }
-
     return fields;
 }
 
@@ -887,7 +870,6 @@ void CtStorageSqlite::_fix_db_tables()
     const static std::vector<std::vector<std::string>> tables = {
         {"node", "ts_creation", "INTEGER", "ts_lastsave", "INTEGER"}, {"image", "filename", "TEXT", "link", "TEXT", "time", "TEXT"}
     };
-
     try {
         for (const auto& table : tables) {
             auto& table_name = table[0];
@@ -901,8 +883,8 @@ void CtStorageSqlite::_fix_db_tables()
                 if ((field + 1) == table.end()) break;
             }
         }
-
-    } catch(std::runtime_error& e) {
+    }
+    catch(std::runtime_error& e) {
         throw std::runtime_error(fmt::format("Error while adding mising column to table: {}", e.what()));
     }
 }

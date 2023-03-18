@@ -40,7 +40,7 @@ bool CtStorageMultiFile::save_treestore(const fs::path& file_path,
     return false;
 }
 
-void CtStorageMultiFile::import_nodes(const fs::path& path, const Gtk::TreeIter& parent_iter)
+void CtStorageMultiFile::import_nodes(const fs::path& file_path, const Gtk::TreeIter& parent_iter)
 {
     //TODO
 }

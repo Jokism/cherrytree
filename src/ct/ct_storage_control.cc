@@ -58,22 +58,29 @@
                                                         Glib::ustring& error,
                                                         Glib::ustring password)
 {
-    std::unique_ptr<CtStorageEntity> storage;
-    fs::path extracted_file_path = file_path;
-    try {
-        if (not fs::is_regular_file(file_path)) throw std::runtime_error("no file");
+    fs::path extracted_file_path{file_path};
+    const CtDocType doc_type = fs::get_doc_type(file_path);
 
-        // unpack file if need
-        if (fs::get_doc_encrypt(file_path) == CtDocEncrypt::True) {
-            extracted_file_path = _extract_file(pCtMainWin, file_path, password);
-            if (extracted_file_path.empty()) {
-                // user canceled operation
-                return nullptr;
+    try {
+        if (CtDocType::MultiFile == doc_type) {
+            if (not fs::is_directory(file_path)) throw std::runtime_error("no dir");
+        }
+        else {
+            if (not fs::is_regular_file(file_path)) throw std::runtime_error("no file");
+
+            // unpack file if need
+            if (fs::get_doc_encrypt(file_path) == CtDocEncrypt::True) {
+                extracted_file_path = _extract_file(pCtMainWin, file_path, password);
+                if (extracted_file_path.empty()) {
+                    // user canceled operation
+                    return nullptr;
+                }
             }
         }
 
         // choose storage type
-        storage = CtStorageControl::_get_entity_by_type(pCtMainWin, fs::get_doc_type(file_path));
+        std::unique_ptr<CtStorageEntity> storage = CtStorageControl::_get_entity_by_type(pCtMainWin, fs::get_doc_type(file_path));
+        if (not storage) throw std::runtime_error("no storage");
 
         // load from file
         if (not storage->populate_treestore(extracted_file_path, error)) throw std::runtime_error(error);
@@ -88,7 +95,7 @@
         return doc;
     }
     catch (std::exception& e) {
-        if (extracted_file_path != file_path && fs::is_regular_file(extracted_file_path)) {
+        if (extracted_file_path != file_path and fs::is_regular_file(extracted_file_path)) {
             g_remove(extracted_file_path.c_str());
         }
         spdlog::error(e.what());
@@ -100,6 +107,8 @@
 /*static*/bool CtStorageControl::document_integrity_check_pass(CtMainWin* pCtMainWin, const fs::path& file_path, Glib::ustring& error)
 {
     std::unique_ptr<CtStorageEntity> storage = CtStorageControl::_get_entity_by_type(pCtMainWin, fs::get_doc_type(file_path));
+    if (not storage) throw std::runtime_error("no storage");
+
     storage->set_is_dry_run();
     return storage->populate_treestore(file_path, error);
 }
@@ -116,7 +125,6 @@
     pCtMainWin->get_status_bar().push(_("Writing to Disk..."));
     while (gtk_events_pending()) gtk_main_iteration();
 
-    std::unique_ptr<CtStorageEntity> storage;
     fs::path extracted_file_path = file_path;
     const CtDocType doc_type = fs::get_doc_type(file_path);
 
@@ -136,7 +144,9 @@
         }
         f_cleanup();
 
-        storage = CtStorageControl::_get_entity_by_type(pCtMainWin, doc_type);
+        std::unique_ptr<CtStorageEntity> storage = CtStorageControl::_get_entity_by_type(pCtMainWin, doc_type);
+        if (not storage) throw std::runtime_error("no storage");
+
         // will save all data because it's the first time
         CtStorageSyncPending fakePending;
         if (not storage->save_treestore(extracted_file_path, fakePending, error, exporting, start_offset, end_offset)) {
@@ -187,18 +197,20 @@ bool CtStorageControl::save(bool need_vacuum, Glib::ustring &error)
     const std::string str_timestamp = std::to_string(g_get_monotonic_time());
     fs::path main_backup = _file_path;
     main_backup += (str_timestamp + _file_path.extension());
-    const bool need_backup = _pCtConfig->backupCopy and _pCtConfig->backupNum > 0;
+    const CtDocType doc_type = fs::get_doc_type(_file_path);
+    // !!! CtDocType::MultiFile does not support backups yet !!!
+    const bool need_backup = CtDocType::MultiFile != doc_type and _pCtConfig->backupCopy and _pCtConfig->backupNum > 0;
     const bool need_encrypt = _file_path != _extracted_file_path;
     try {
         if (_file_path.empty()) {
-            throw std::runtime_error("storage is not initialized");
+            throw std::runtime_error("storage not initialized");
         }
 
         // sqlite could lose connection
         _storage->test_connection();
 
         if (need_backup) {
-            if (fs::get_doc_type(_file_path) == CtDocType::SQLite and not need_encrypt) {
+            if (CtDocType::SQLite == doc_type and not need_encrypt) {
                 _storage->close_connect();    // temporary, because of sqlite keepig the file
                 if (not fs::copy_file(_file_path, main_backup)) {
                     throw std::runtime_error(str::format(_("You Have No Write Access to %s"), _file_path.parent_path().string()));
@@ -273,9 +285,9 @@ Glib::RefPtr<Gsv::Buffer> CtStorageControl::get_delayed_text_buffer(const gint64
                                                                     const std::string& syntax,
                                                                     std::list<CtAnchoredWidget*>& widgets) const
 {
-    if (!_storage) {
+    if (not _storage) {
         spdlog::error("!! storage is not initialized");
-        return Glib::RefPtr<Gsv::Buffer>();
+        return Glib::RefPtr<Gsv::Buffer>{};
     }
     return _storage->get_delayed_text_buffer(node_id, syntax, widgets);
 }
@@ -496,7 +508,7 @@ void CtStorageControl::pending_edit_db_node_prop(gint64 node_id)
     }
     else {
         CtStorageNodeState node_state;
-        node_state.upd = true;
+        node_state.is_update_of_existing = true;
         node_state.prop = true;
         _syncPending.nodes_to_write_dict[node_id] = node_state;
     }
@@ -509,7 +521,7 @@ void CtStorageControl::pending_edit_db_node_buff(gint64 node_id)
     }
     else {
         CtStorageNodeState node_state;
-        node_state.upd = true;
+        node_state.is_update_of_existing = true;
         node_state.buff = true;
         _syncPending.nodes_to_write_dict[node_id] = node_state;
     }
@@ -522,7 +534,7 @@ void CtStorageControl::pending_edit_db_node_hier(gint64 node_id)
     }
     else {
         CtStorageNodeState node_state;
-        node_state.upd = true;
+        node_state.is_update_of_existing = true;
         node_state.hier = true;
         _syncPending.nodes_to_write_dict[node_id] = node_state;
     }
@@ -531,7 +543,7 @@ void CtStorageControl::pending_edit_db_node_hier(gint64 node_id)
 void CtStorageControl::pending_new_db_node(gint64 node_id)
 {
     CtStorageNodeState node_state;
-    node_state.upd = false;
+    node_state.is_update_of_existing = false;
     node_state.prop = true;
     node_state.buff = true;
     node_state.hier = true;
@@ -554,16 +566,24 @@ void CtStorageControl::pending_edit_db_bookmarks()
     _syncPending.bookmarks_to_write = true;
 }
 
-void CtStorageControl::add_nodes_from_storage(const fs::path& path, Gtk::TreeIter parent_iter)
+void CtStorageControl::add_nodes_from_storage(const fs::path& file_path, Gtk::TreeIter parent_iter)
 {
-    if (!fs::is_regular_file(path)) {
-        throw std::runtime_error(fmt::format("File: {} - is not a regular file", path));
+    const CtDocType doc_type = fs::get_doc_type(_file_path);
+    if (CtDocType::MultiFile == doc_type) {
+        if (not fs::is_directory(file_path)) {
+            throw std::runtime_error(fmt::format("{} not a dir", file_path));
+        }
+    }
+    else {
+        if (not fs::is_regular_file(file_path)) {
+            throw std::runtime_error(fmt::format("{} not a file", file_path));
+        }
     }
 
     Glib::ustring password;
-    fs::path extracted_file_path = path;
-    if (fs::get_doc_encrypt(path) == CtDocEncrypt::True) {
-        extracted_file_path = _extract_file(_pCtMainWin, path, password);
+    fs::path extracted_file_path = file_path;
+    if (fs::get_doc_encrypt(file_path) == CtDocEncrypt::True) {
+        extracted_file_path = _extract_file(_pCtMainWin, file_path, password);
         if (extracted_file_path.empty()) {
             // user canceled operation
             return;
@@ -571,19 +591,20 @@ void CtStorageControl::add_nodes_from_storage(const fs::path& path, Gtk::TreeIte
     }
 
     std::unique_ptr<CtStorageEntity> storage = CtStorageControl::_get_entity_by_type(_pCtMainWin, fs::get_doc_type(extracted_file_path));
+    if (not storage) throw std::runtime_error("no storage");
+
     storage->import_nodes(extracted_file_path, parent_iter);
 
     _pCtMainWin->get_tree_store().nodes_sequences_fix(parent_iter, false);
     _pCtMainWin->update_window_save_needed();
 }
 
-void CtStorageCache::generate_cache(CtMainWin* pCtMainWin, const CtStorageSyncPending* pending, bool xml)
+void CtStorageCache::generate_cache(CtMainWin* pCtMainWin, const CtStorageSyncPending* pending, bool for_xml)
 {
     std::vector<CtImagePng*> image_list;
-
     auto& store = pCtMainWin->get_tree_store();
-    if (pending == nullptr) // all nodes
-    {
+    if (not pending) {
+        // all nodes
         store.get_store()->foreach([&](const Gtk::TreePath&, const Gtk::TreeIter& iter)->bool{
             for (auto widget: store.to_ct_tree_iter(iter).get_anchored_widgets_fast())
                 if (widget->get_type() == CtAnchWidgType::ImagePng) // important to check type
@@ -603,11 +624,10 @@ void CtStorageCache::generate_cache(CtMainWin* pCtMainWin, const CtStorageSyncPe
             }
         }
     }
-
-    parallel_fetch_pixbufers(image_list, xml);
+    _parallel_fetch_pixbufers(image_list, for_xml);
 }
 
-void CtStorageCache::parallel_fetch_pixbufers(const std::vector<CtImagePng*>& image_widgets, bool xml)
+void CtStorageCache::_parallel_fetch_pixbufers(const std::vector<CtImagePng*>& image_widgets, bool for_xml)
 {
     _cached_images.clear();
 
@@ -621,15 +641,16 @@ void CtStorageCache::parallel_fetch_pixbufers(const std::vector<CtImagePng*>& im
     CtMiscUtil::parallel_for(0, image_pair.size(), [&](size_t index) {
         auto& pair = image_pair[index];
         pair.second = pair.first->get_raw_blob();
-        if (xml) pair.second = Glib::Base64::encode(pair.second);
+        if (for_xml) pair.second = Glib::Base64::encode(pair.second);
     });
 
-    for (auto& pair: image_pair)
+    for (auto& pair : image_pair) {
         _cached_images.emplace(pair);
+    }
 
     //auto end = std::chrono::steady_clock::now();
     //std::chrono::duration<double> elapsed_seconds = end-start;
-    //spdlog::debug("parallel_fetch_pixbufers amount: , {} sec.", elapsed_seconds.count());
+    //spdlog::debug("{} amount: , {} sec.", __FUNCTION__, elapsed_seconds.count());
 }
 
 bool CtStorageCache::get_cached_image(CtImagePng* image, std::string& cached_image)
