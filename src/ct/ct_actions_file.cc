@@ -76,6 +76,7 @@ void CtActions::file_save_as()
     }
     std::string filepath;
     if (CtDocType::MultiFile == storageSelArgs.ctDocType) {
+        fileSelArgs.curr_file_name = "CherryTree_";
         filepath = CtDialogs::folder_save_as_dialog(_pCtMainWin, fileSelArgs);
     }
     else {
@@ -87,9 +88,7 @@ void CtActions::file_save_as()
     if (filepath.empty()) {
         return;
     }
-    if (CtDocType::MultiFile != storageSelArgs.ctDocType) {
-        CtMiscUtil::filepath_extension_fix(storageSelArgs.ctDocType, storageSelArgs.ctDocEncrypt, filepath);
-    }
+    CtMiscUtil::filepath_extension_fix(storageSelArgs.ctDocType, storageSelArgs.ctDocEncrypt, filepath);
     _pCtMainWin->file_save_as(filepath, storageSelArgs.password);
 }
 

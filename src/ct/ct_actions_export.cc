@@ -105,22 +105,27 @@ void CtActions::export_to_ctd()
     if (not currDocFilepath.empty()) {
         fileSelArgs.curr_folder = currDocFilepath.parent_path();
     }
-    fileSelArgs.filter_name = _("CherryTree Document");
-    
-    fileSelArgs.filter_pattern.push_back(std::string{CtConst::CHAR_STAR}+fileExtension);
-    std::string new_filepath = CtDialogs::file_save_as_dialog(_pCtMainWin, fileSelArgs);
+    std::string new_filepath;
+    if (CtDocType::MultiFile == storageSelArgs.ctDocType) {
+        new_filepath = CtDialogs::folder_save_as_dialog(_pCtMainWin, fileSelArgs);
+    }
+    else {
+        fileSelArgs.filter_name = _("CherryTree Document");
+        fileSelArgs.filter_pattern.push_back(std::string{CtConst::CHAR_STAR}+fileExtension);
+        new_filepath = CtDialogs::file_save_as_dialog(_pCtMainWin, fileSelArgs);
+    }
     if (new_filepath.empty()) {
         return;
     }
     CtMiscUtil::filepath_extension_fix(storageSelArgs.ctDocType, storageSelArgs.ctDocEncrypt, new_filepath);
     Glib::ustring error;
-    std::unique_ptr<CtStorageControl> new_storage(CtStorageControl::save_as(_pCtMainWin,
+    std::unique_ptr<CtStorageControl> new_storage{CtStorageControl::save_as(_pCtMainWin,
                                                                             new_filepath,
                                                                             storageSelArgs.password,
                                                                             error,
                                                                             export_type,
                                                                             start_offset,
-                                                                            end_offset));
+                                                                            end_offset)};
     if (not new_storage) {
         CtDialogs::error_dialog(str::xml_escape(error), *_pCtMainWin);
     }

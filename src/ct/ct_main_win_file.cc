@@ -296,8 +296,8 @@ void CtMainWin::file_save(bool need_vacuum)
 void CtMainWin::file_save_as(const std::string& new_filepath, const Glib::ustring& password)
 {
     Glib::ustring error;
-    std::unique_ptr<CtStorageControl> new_storage(CtStorageControl::save_as(this, new_filepath, password, error));
-    if (!new_storage) {
+    std::unique_ptr<CtStorageControl> new_storage{CtStorageControl::save_as(this, new_filepath, password, error)};
+    if (not new_storage) {
         CtDialogs::error_dialog(str::xml_escape(error), *this);
         return;
     }
