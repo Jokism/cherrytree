@@ -1,7 +1,7 @@
 /*
  * ct_actions_import.cc
  *
- * Copyright 2009-2022
+ * Copyright 2009-2023
  * Giuseppe Penone <giuspen@gmail.com>
  * Evgenii Gurianov <https://github.com/txe>
  *
@@ -96,7 +96,7 @@ void CtActions::import_node_from_html_directory() noexcept
 void CtActions::import_nodes_from_ct_file() noexcept
 {
     try {
-        CtDialogs::FileSelectArgs args{_pCtMainWin};
+        CtDialogs::CtFileSelectArgs args{};
         args.curr_folder = _pCtConfig->pickDirImport;
         args.filter_name = _("CherryTree Document");
         args.filter_pattern.push_back("*.ctb"); // macos doesn't understand *.ct*
@@ -104,7 +104,7 @@ void CtActions::import_nodes_from_ct_file() noexcept
         args.filter_pattern.push_back("*.ctd");
         args.filter_pattern.push_back("*.ctz");
 
-        auto fpath = CtDialogs::file_select_dialog(args);
+        auto fpath = CtDialogs::file_select_dialog(_pCtMainWin, args);
         if (fpath.empty()) return; // No file selected
         _pCtConfig->pickDirImport = Glib::path_get_dirname(fpath);
 
@@ -220,12 +220,12 @@ void CtActions::import_nodes_from_notecase_html() noexcept
 
 void CtActions::_import_from_file(CtImporterInterface* importer, const bool dummy_root) noexcept
 {
-    CtDialogs::FileSelectArgs args{_pCtMainWin};
+    CtDialogs::CtFileSelectArgs args{};
     args.curr_folder = _pCtConfig->pickDirImport;
     args.filter_name = importer->file_pattern_name();
     args.filter_pattern = importer->file_patterns();
     args.filter_mime = importer->file_mime_types();
-    const std::string filepath = CtDialogs::file_select_dialog(args);
+    const std::string filepath = CtDialogs::file_select_dialog(_pCtMainWin, args);
     if (filepath.empty()) return;
     spdlog::debug("{} {}", __FUNCTION__, filepath);
     _pCtConfig->pickDirImport = Glib::path_get_dirname(filepath);
@@ -244,7 +244,7 @@ void CtActions::_import_from_file(CtImporterInterface* importer, const bool dumm
 void CtActions::_import_from_dir(CtImporterInterface* importer, const std::string& custom_dir) noexcept
 {
     std::string start_dir = custom_dir.empty() or not fs::is_directory(custom_dir) ? _pCtConfig->pickDirImport : custom_dir;
-    std::string import_dir = CtDialogs::folder_select_dialog(start_dir, _pCtMainWin);
+    std::string import_dir = CtDialogs::folder_select_dialog(_pCtMainWin, start_dir);
     if (import_dir.empty()) return;
     if (custom_dir.empty()) {
         _pCtConfig->pickDirImport = import_dir;

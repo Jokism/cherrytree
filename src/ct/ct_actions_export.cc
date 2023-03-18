@@ -1,7 +1,7 @@
 ﻿/*
  * ct_actions_export.cc
  *
- * Copyright 2009-2022
+ * Copyright 2009-2023
  * Giuseppe Penone <giuspen@gmail.com>
  * Evgenii Gurianov <https://github.com/txe>
  *
@@ -100,7 +100,7 @@ void CtActions::export_to_ctd()
     else {
         proposed_name = CtMiscUtil::get_node_hierarchical_name(_pCtMainWin->curr_tree_iter()) + fileExtension;
     }
-    CtDialogs::FileSelectArgs fileSelArgs{_pCtMainWin};
+    CtDialogs::CtFileSelectArgs fileSelArgs{};
     fileSelArgs.curr_file_name = proposed_name;
     if (not currDocFilepath.empty()) {
         fileSelArgs.curr_folder = currDocFilepath.parent_path();
@@ -108,7 +108,7 @@ void CtActions::export_to_ctd()
     fileSelArgs.filter_name = _("CherryTree Document");
     
     fileSelArgs.filter_pattern.push_back(std::string{CtConst::CHAR_STAR}+fileExtension);
-    std::string new_filepath = CtDialogs::file_save_as_dialog(fileSelArgs);
+    std::string new_filepath = CtDialogs::file_save_as_dialog(_pCtMainWin, fileSelArgs);
     if (new_filepath.empty()) {
         return;
     }
@@ -346,13 +346,13 @@ void CtActions::_export_to_txt(const fs::path& auto_path, bool auto_overwrite)
 
 fs::path CtActions::_get_pdf_filepath(const fs::path& proposed_name)
 {
-    CtDialogs::FileSelectArgs args{_pCtMainWin};
+    CtDialogs::CtFileSelectArgs args{};
     args.curr_folder = _pCtConfig->pickDirExport;
     args.curr_file_name = proposed_name.string() + ".pdf";
     args.filter_name = _("PDF File");
     args.filter_pattern = {"*.pdf"};
 
-    fs::path filename = CtDialogs::file_save_as_dialog(args);
+    fs::path filename = CtDialogs::file_save_as_dialog(_pCtMainWin, args);
     if (!filename.empty())
     {
         if (filename.extension() != ".pdf") filename += ".pdf";
@@ -367,13 +367,13 @@ fs::path CtActions::_get_txt_filepath(const fs::path& dir_place, const fs::path&
     fs::path filename;
     if (dir_place.empty())
     {
-        CtDialogs::FileSelectArgs args{_pCtMainWin};
+        CtDialogs::CtFileSelectArgs args{};
         args.curr_folder = _pCtConfig->pickDirExport;
         args.curr_file_name = proposed_name.string() + ".txt";
         args.filter_name = _("Plain Text Document");
         args.filter_pattern = {"*.txt"};
 
-        filename = CtDialogs::file_save_as_dialog(args);
+        filename = CtDialogs::file_save_as_dialog(_pCtMainWin, args);
     }
     else
     {
@@ -394,7 +394,7 @@ fs::path CtActions::_get_txt_folder(fs::path dir_place, fs::path new_folder, boo
 {
     if (dir_place.empty())
     {
-        dir_place = CtDialogs::folder_select_dialog(_pCtConfig->pickDirExport, _pCtMainWin);
+        dir_place = CtDialogs::folder_select_dialog(_pCtMainWin, _pCtConfig->pickDirExport);
         if (dir_place.empty())
             return "";
     }
