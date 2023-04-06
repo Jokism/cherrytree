@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: svn_cherrytree 0.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-02-28 20:29+0000\n"
-"PO-Revision-Date: 2023-03-05 14:00+0100\n"
+"PO-Revision-Date: 2023-04-04 20:00+0100\n"
 "Last-Translator: Mr. Update\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -78,10 +78,10 @@ msgid "Matches"
 msgstr "Treffer"
 
 msgid "Replace in Multiple Nodes..."
-msgstr "In mehreren Knoten ersetzen..."
+msgstr "In mehreren Knoten ersetzen"
 
 msgid "Find in Multiple Nodes..."
-msgstr "In mehreren Knoten suchen..."
+msgstr "In mehreren Knoten suchen"
 
 msgid "No Previous Search Was Performed During This Session."
 msgstr "In dieser Sitzung wurde noch keine Suche durchgeführt."
@@ -156,7 +156,7 @@ msgstr "Die Verknüpfung zur Datei '%s' ist ungültig."
 
 #, c-format
 msgid "The Folder Link '%s' is Not Valid"
-msgstr "Die Verknüpfung zum Ordner '%s' ist ungültig"
+msgstr "Die Verknüpfung zum Ordner '%s' ist ungültig."
 
 #, c-format
 msgid "The Link Refers to a Node that Does Not Exist Anymore (Id = %s)"
@@ -187,7 +187,7 @@ msgstr ""
 "Terminal in den Einstellungen."
 
 msgid "Edit Table Properties"
-msgstr "Tabelleneigenschaften bearbeiten..."
+msgstr "Tabelleneigenschaften bearbeiten"
 
 msgid "Insert Anchor"
 msgstr "Anker einfügen"
@@ -407,12 +407,12 @@ msgid ""
 "MA 02110-1301, USA.\n"
 msgstr ""
 "\n"
-"Dieses Programm ist freie Software, Sie können sie weitergeben und/oder "
+"Dieses Programm ist freie Software. Sie können es weitergeben und/oder "
 "verändern,\n"
 "solange Sie sich an die Regeln der GNU General Public License halten,\n"
-"wie sie von der Free Software Foundation festgelegt wurde;\n"
+"wie sie von der Free Software Foundation festgelegt wurden;\n"
 "entweder in Version 3 der Lizenz oder (nach Ihrer Wahl) in jeder folgenden "
-"Lizenz.\n"
+"Version.\n"
 "\n"
 "Dieses Programm wurde mit dem Ziel veröffentlicht, dass Sie es nützlich "
 "finden,\n"
@@ -634,7 +634,7 @@ msgid "Regular Expression"
 msgstr "Reguläre Ausdrücke"
 
 msgid "Online Manual"
-msgstr "Online-_Handbuch"
+msgstr "Online-Handbuch"
 
 msgid "Accent Insensitive"
 msgstr "Akzent-insensitiv"
@@ -863,7 +863,7 @@ msgid "Could not access the executable 'dvipng'"
 msgstr "Kein Zugriff auf das Programm 'dvipng'"
 
 msgid "Downloading"
-msgstr "Herunterladen..."
+msgstr "Herunterladen"
 
 #, c-format
 msgid "The Document %s was Not Found"
@@ -952,7 +952,7 @@ msgid "Reset"
 msgstr "Rücksetzung"
 
 msgid "Remove from list"
-msgstr "_Aus der Liste löschen"
+msgstr "Aus der Liste löschen"
 
 msgid "_File"
 msgstr "_Datei"
@@ -1036,7 +1036,7 @@ msgid "_Table"
 msgstr "_Tabelle"
 
 msgid "_CodeBox"
-msgstr "CodeBox"
+msgstr "_CodeBox"
 
 msgid "File"
 msgstr "Datei"
@@ -1129,7 +1129,7 @@ msgid "Insert an Image"
 msgstr "Bild einfügen"
 
 msgid "Insert Late_x..."
-msgstr "LaTeX-Box einfügen..."
+msgstr "LaTe_X-Box einfügen..."
 
 msgid "Insert LatexBox"
 msgstr "LaTeX-Box einfügen"
@@ -1277,7 +1277,7 @@ msgid "Delete the Selected Table"
 msgstr "Ausgewählte Tabelle löschen"
 
 msgid "_Add Column"
-msgstr "Spalte einfügen"
+msgstr "Spalte hinzufügen"
 
 msgid "Add a Table Column"
 msgstr "Tabellenspalte hinzufügen"
@@ -1313,7 +1313,7 @@ msgid "Decrease the Width of the Column"
 msgstr "Die Breite der Spalte verkleinern"
 
 msgid "_Add Row"
-msgstr "_Zeile einfügen"
+msgstr "_Zeile hinzufügen"
 
 msgid "Add a Table Row"
 msgstr "Tabellenzeile hinzufügen"
@@ -1337,19 +1337,19 @@ msgid "Paste a Table Row"
 msgstr "Tabellenzeile einfügen"
 
 msgid "Delete the Selected Table Row"
-msgstr "Markierte Tabellenzeile löschen"
+msgstr "Ausgewählte Tabellenzeile löschen"
 
 msgid "Move Row _Up"
 msgstr "Zeile nach _oben verschieben"
 
 msgid "Move the Selected Row Up"
-msgstr "Markierte Zeile nach oben verschieben"
+msgstr "Ausgewählte Zeile nach oben verschieben"
 
 msgid "Move Row _Down"
 msgstr "Zeile nach _unten verschieben"
 
 msgid "Move the Selected Row Down"
-msgstr "Markierte Zeile nach unten verschieben"
+msgstr "Ausgewählte Zeile nach unten verschieben"
 
 msgid "Sort Rows De_scending"
 msgstr "Zeilen absteigend sortieren"
@@ -1379,7 +1379,7 @@ msgid "Change CodeBox _Properties..."
 msgstr "CodeBox-Eigenschaften _ändern..."
 
 msgid "Edit the Properties of the CodeBox"
-msgstr "Die Eigenschaften der CodeBox bearbeiten"
+msgstr "Eigenschaften der CodeBox bearbeiten"
 
 msgid "CodeBox _Load From Text File..."
 msgstr "CodeBox aus Textdatei erstellen..."
@@ -1649,7 +1649,7 @@ msgid "E_xecute Code Line or Selection"
 msgstr "Codezeile oder Auswahl ausführen"
 
 msgid "Execute Code from Current Line or Selected Text"
-msgstr "Code aus aktueller oder markierten Zeilen ausführen"
+msgstr "Code aus aktueller Zeile oder markiertem Text ausführen"
 
 msgid "Tree"
 msgstr "Baumstruktur"
@@ -1688,19 +1688,19 @@ msgid "Duplicate Node _and Subnodes"
 msgstr "Kno_ten und Unterknoten duplizieren"
 
 msgid "Duplicate the Selected Node and the Subnodes"
-msgstr "Markierten Knoten mit Unterknoten duplizieren"
+msgstr "Markierten Knoten und Unterknoten duplizieren"
 
 msgid "Copy Node and S_ubnodes"
 msgstr "Kno_ten und Unterknoten kopieren"
 
 msgid "Copy the Selected Node and the Subnodes"
-msgstr "Markierten Knoten mit Unterknoten kopieren"
+msgstr "Markierten Knoten und Unterknoten kopieren"
 
 msgid "_Paste Node and Subnodes"
 msgstr "Kno_ten und Unterknoten einfügen"
 
 msgid "Paste the Copied Node and Subnodes"
-msgstr "Markierte Knoten und Unterknoten einfügen"
+msgstr "Kopierte Knoten und Unterknoten einfügen"
 
 msgid "Insert _Today's Node Under Tree Root"
 msgstr "Knoten mit heuti_gem Datum einfügen"
@@ -1839,7 +1839,7 @@ msgid "Find into the Selected Node Content"
 msgstr "Im aktuellen Knoten suchen"
 
 msgid "Find _in Multiple Nodes..."
-msgstr "In mehreren Knoten suchen..."
+msgstr "_In mehreren Knoten suchen..."
 
 msgid "Find in Multiple Nodes"
 msgstr "In mehreren Knoten suchen"
@@ -1869,7 +1869,7 @@ msgid "Replace into the Selected Node Content"
 msgstr "Im aktuellen Knoten ersetzen"
 
 msgid "Replace in _Multiple Nodes..."
-msgstr "In mehreren Knoten ersetzen..."
+msgstr "In _mehreren Knoten ersetzen..."
 
 msgid "Replace in Multiple Nodes"
 msgstr "In mehreren Knoten ersetzen"
@@ -1992,98 +1992,98 @@ msgid "From _CherryTree File"
 msgstr "Aus _CherryTree-Datei"
 
 msgid "Add Nodes of a CherryTree File to the Current Tree"
-msgstr "Knoten aus einer CherryTree-Datei im aktuellen Baum einfügen"
+msgstr "Knoten aus einer CherryTree-Datei im aktuellen Baum hinzufügen"
 
 msgid "From _Plain Text File"
 msgstr "Aus Te_xtdatei"
 
 msgid "Add Node from a Plain Text File to the Current Tree"
-msgstr "Knoten aus einer Textdatei im aktuellen Baum einfügen"
+msgstr "Knoten aus einer Textdatei im aktuellen Baum hinzufügen"
 
 msgid "From _Folder of Plain Text Files"
 msgstr "Aus _Ordner mit Textdateien"
 
 msgid "Add Nodes from a Folder of Plain Text Files to the Current Tree"
-msgstr "Knoten aus einem Ordner mit Textdateien im aktuellen Baum einfügen"
+msgstr "Knoten aus einem Ordner mit Textdateien im aktuellen Baum hinzufügen"
 
 msgid "From _HTML File"
 msgstr "Aus _HTML-Datei"
 
 msgid "Add Node from an HTML File to the Current Tree"
-msgstr "Knoten aus einer HTML-Datei im aktuellen Baum einfügen"
+msgstr "Knoten aus einer HTML-Datei im aktuellen Baum hinzufügen"
 
 msgid "From _Folder of HTML Files"
 msgstr "Aus Or_dner mit HTML-Dateien"
 
 msgid "Add Nodes from a Folder of HTML Files to the Current Tree"
-msgstr "Knoten aus einem Ordner mit HTML-Dateien im aktuellen Baum einfügen"
+msgstr "Knoten aus einem Ordner mit HTML-Dateien im aktuellen Baum hinzufügen"
 
 msgid "From _Markdown File"
 msgstr "Aus Markdo_wn-Datei"
 
 msgid "Add a node from a Markdown File to the Current Tree"
-msgstr "Knoten aus einer Markdown-Datei zum aktuellen Baum einfügen"
+msgstr "Knoten aus einer Markdown-Datei zum aktuellen Baum hinzufügen"
 
 msgid "From _Folder of Markdown Files"
 msgstr "Aus Ordn_er mit Markdown-Dateien"
 
 msgid "Add Nodes from a Folder of Markdown Files to the Current Tree"
 msgstr ""
-"Knoten aus einem Ordner mit Markdown-Dateien im aktuellen Baum einfügen"
+"Knoten aus einem Ordner mit Markdown-Dateien im aktuellen Baum hinzufügen"
 
 msgid "From _Gnote Folder"
 msgstr "Aus _Gnote-Ordner"
 
 msgid "Add Nodes of a Gnote Folder to the Current Tree"
-msgstr "Knoten aus einem Gnote-Ordner im aktuellen Baum einfügen"
+msgstr "Knoten aus einem Gnote-Ordner im aktuellen Baum hinzufügen"
 
 msgid "From _KeepNote Folder"
 msgstr "Aus _KeepNote-Ordner"
 
 msgid "Add Nodes of a KeepNote Folder to the Current Tree"
-msgstr "Knoten aus einem KeepNote-Ordner im aktuellen Baum einfügen"
+msgstr "Knoten aus einem KeepNote-Ordner im aktuellen Baum hinzufügen"
 
 msgid "From _Leo File"
 msgstr "Aus _Leo-Datei"
 
 msgid "Add Nodes of a Leo File to the Current Tree"
-msgstr "Knoten aus einer Leo-Datei im aktuellen Baum einfügen"
+msgstr "Knoten aus einer Leo-Datei im aktuellen Baum hinzufügen"
 
 msgid "From _Mempad File"
 msgstr "Aus _Mempad-Datei"
 
 msgid "Add Nodes of a Mempad File to the Current Tree"
-msgstr "Knoten aus einer Mempad-Datei im aktuellen Baum einfügen"
+msgstr "Knoten aus einer Mempad-Datei im aktuellen Baum hinzufügen"
 
 msgid "From _NoteCase HTML File"
 msgstr "Aus _NoteCase-HTML-Datei"
 
 msgid "Add Nodes of a NoteCase HTML File to the Current Tree"
-msgstr "Knoten aus einer NoteCase-HTML-Datei im aktuellen Baum einfügen"
+msgstr "Knoten aus einer NoteCase-HTML-Datei im aktuellen Baum hinzufügen"
 
 msgid "From _RedNotebook HTML File"
 msgstr "Aus _RedNotebook-HTML-Datei"
 
 msgid "Add Nodes of a RedNotebook HTML file to the Current Tree"
-msgstr "Knoten aus einer RedNotebook-HTML-Datei im aktuellen Baum einfügen"
+msgstr "Knoten aus einer RedNotebook-HTML-Datei im aktuellen Baum hinzufügen"
 
 msgid "From T_omboy Folder"
 msgstr "Aus Tombo_y-Ordner"
 
 msgid "Add Nodes of a Tomboy Folder to the Current Tree"
-msgstr "Knoten aus einem Tomboy-Ordner im aktuellen Baum einfügen"
+msgstr "Knoten aus einem Tomboy-Ordner im aktuellen Baum hinzufügen"
 
 msgid "From T_reepad Lite File"
 msgstr "Aus _Treepad-Lite-Datei"
 
 msgid "Add Nodes of a Treepad Lite File to the Current Tree"
-msgstr "Knoten aus einer Treepad-Lite-Datei im aktuellen Baum einfügen"
+msgstr "Knoten aus einer Treepad-Lite-Datei im aktuellen Baum hinzufügen"
 
 msgid "From _Zim Folder"
 msgstr "Aus _Zim-Ordner"
 
 msgid "Add Nodes of a Zim Folder to the Current Tree"
-msgstr "Knoten aus einem Zim-Ordner im aktuellen Baum einfügen"
+msgstr "Knoten aus einem Zim-Ordner im aktuellen Baum hinzufügen"
 
 msgid "Export"
 msgstr "Export"
@@ -2116,7 +2116,7 @@ msgid "Help"
 msgstr "Hilfe"
 
 msgid "_Check Newer Version"
-msgstr "Auf neuere Version prüfen"
+msgstr "_Auf neuere Version prüfen"
 
 msgid "Check for a Newer Version"
 msgstr "Nach neuerer Version suchen"
@@ -2197,28 +2197,28 @@ msgid "_Save LatexBox as PNG..."
 msgstr "LaTeX-Box als _PNG speichern..."
 
 msgid "Save the Selected LatexBox as a PNG file"
-msgstr "Ausgewählte LaTeX-Box als _PNG speichern"
+msgstr "Ausgewählte LaTeX-Box als PNG speichern"
 
 msgid "_Edit LatexBox..."
-msgstr "LaTeX-Box bearbeiten..."
+msgstr "LaTeX-Box _bearbeiten..."
 
 msgid "Edit the Selected LatexBox"
 msgstr "Ausgewählte LaTeX-Box bearbeiten"
 
 msgid "C_ut LatexBox"
-msgstr "LaTeX-Box ausschneiden"
+msgstr "LaTeX-Box _ausschneiden"
 
 msgid "Cut the Selected LatexBox"
 msgstr "Ausgewählte LaTeX-Box ausschneiden"
 
 msgid "_Copy LatexBox"
-msgstr "LaTeX-Box kopieren"
+msgstr "LaTeX-Box _kopieren"
 
 msgid "Copy the Selected LatexBox"
 msgstr "Ausgewählte LaTeX-Box kopieren"
 
 msgid "_Delete LatexBox"
-msgstr "LaTeX-Box löschen"
+msgstr "LaTeX-Box _löschen"
 
 msgid "Delete the Selected LatexBox"
 msgstr "Ausgewählte LaTeX-Box löschen"
