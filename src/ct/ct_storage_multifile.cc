@@ -36,8 +36,21 @@ bool CtStorageMultiFile::save_treestore(const fs::path& file_path,
                                         const int start_offset/*= 0*/,
                                         const int end_offset/*= -1*/)
 {
-    //TODO
-    return false;
+    try {
+        if (_dir_path.empty()) {
+            // it's the first time (or an export), a new file will be created
+            //TODO
+        }
+        else {
+            // or need just update some info
+            //TODO
+        }
+        return true;
+    }
+    catch (std::exception& e) {
+        error = e.what();
+        return false;
+    }
 }
 
 void CtStorageMultiFile::import_nodes(const fs::path& file_path, const Gtk::TreeIter& parent_iter)

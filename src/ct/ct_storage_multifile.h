@@ -62,4 +62,5 @@ public:
 
 private:
     CtMainWin* const _pCtMainWin;
+    fs::path         _dir_path;
 };
