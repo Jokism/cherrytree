@@ -67,8 +67,9 @@ private:
     CtMainWin* const _pCtMainWin;
     fs::path         _dir_path;
 
-    void _nodes_to_multifile(CtTreeIter* ct_tree_iter,
-                             xmlpp::Element* p_node_parent,
+    bool _nodes_to_multifile(CtTreeIter* ct_tree_iter,
+                             const fs::path& parent_dir_path,
+                             Glib::ustring& error,
                              CtStorageCache* storage_cache,
                              const CtExporting exporting = CtExporting::NONE,
                              const int start_offset = 0,

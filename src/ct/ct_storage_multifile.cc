@@ -87,14 +87,18 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
                 auto ct_tree_iter = _pCtMainWin->get_tree_store().get_ct_iter_first();
                 while (ct_tree_iter) {
                     subnodes.push_back(ct_tree_iter.get_node_id());
-                    _nodes_to_multifile(&ct_tree_iter, xml_doc.get_root_node(), &storage_cache, exporting, start_offset, end_offset);
+                    if (not _nodes_to_multifile(&ct_tree_iter, dir_path, error, &storage_cache, exporting, start_offset, end_offset)) {
+                        return false;
+                    }
                     ct_tree_iter++;
                 }
             }
             else {
                 CtTreeIter ct_tree_iter = _pCtMainWin->curr_tree_iter();
                 subnodes.push_back(ct_tree_iter.get_node_id());
-                _nodes_to_multifile(&ct_tree_iter, xml_doc.get_root_node(), &storage_cache, exporting, start_offset, end_offset);
+                if (not _nodes_to_multifile(&ct_tree_iter, dir_path, error, &storage_cache, exporting, start_offset, end_offset)) {
+                    return false;
+                }
             }
 
             // save subnodes
@@ -102,7 +106,7 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
             p_bookmarks_node->set_attribute("list", str::join_numbers(subnodes, ","));
 
             // write file
-            xml_doc.write_to_file_formatted(Glib::build_filename(_dir_path.string(), SUBNODES_XML));
+            xml_doc.write_to_file_formatted(Glib::build_filename(dir_path.string(), SUBNODES_XML));
         }
         else {
             // or need just update some info
@@ -129,15 +133,21 @@ Glib::RefPtr<Gsv::Buffer> CtStorageMultiFile::get_delayed_text_buffer(const gint
     return Glib::RefPtr<Gsv::Buffer>{};
 }
 
-void CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
-                                             xmlpp::Element* p_node_parent,
+bool CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
+                                             const fs::path& parent_dir_path,
+                                             Glib::ustring& error,
                                              CtStorageCache* storage_cache,
                                              const CtExporting exporting/*= CtExporting::NONE*/,
                                              const int start_offset/*= 0*/,
                                              const int end_offset/*=-1*/)
 {
+    const fs::path dir_path = parent_dir_path / std::to_string(ct_tree_iter->get_node_id());
+    if (g_mkdir(dir_path.c_str(), 0755) < 0) {
+        error = Glib::ustring{"failed to create "} + dir_path.string();
+        return false;
+    }
 #if 0
-    xmlpp::Element* p_node_node =  CtStorageXmlHelper(_pCtMainWin).node_to_xml(
+    xmlpp::Element* p_node_node = CtStorageXmlHelper(_pCtMainWin).node_to_xml(
         ct_tree_iter,
         p_node_parent,
         true,
@@ -155,4 +165,5 @@ void CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
         }
     }
 #endif // 0
+    return true;
 }
