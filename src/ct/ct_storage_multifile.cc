@@ -22,6 +22,10 @@
  */
 
 #include "ct_storage_multifile.h"
+#include "ct_storage_xml.h"
+#include "ct_storage_control.h"
+#include "ct_main_win.h"
+#include "ct_logging.h"
 
 bool CtStorageMultiFile::populate_treestore(const fs::path& file_path, Glib::ustring& error)
 {
@@ -29,7 +33,7 @@ bool CtStorageMultiFile::populate_treestore(const fs::path& file_path, Glib::ust
     return false;
 }
 
-bool CtStorageMultiFile::save_treestore(const fs::path& file_path,
+bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
                                         const CtStorageSyncPending& syncPending,
                                         Glib::ustring& error,
                                         const CtExporting exporting/*= CtExporting::NONE*/,
@@ -38,7 +42,20 @@ bool CtStorageMultiFile::save_treestore(const fs::path& file_path,
 {
     try {
         if (_dir_path.empty()) {
-            // it's the first time (or an export), a new file will be created
+            // it's the first time (or an export), a new folder will be created
+            if (fs::is_directory(dir_path)) {
+                auto message = str::format(_("A Folder with Name '%s' Already Exists in '%s'"),
+                    str::xml_escape(dir_path.filename().string()), str::xml_escape(dir_path.parent_path().string()));
+                if (not CtDialogs::question_dialog(message + "\n" + _("Do you want to Overwrite?"), *_pCtMainWin)) {
+                    return false;
+                }
+                (void)fs::remove_all(dir_path);
+                if (fs::is_directory(dir_path)) {
+                    error = Glib::ustring{"failed to remove "} + dir_path.string();
+                    return false;
+                }
+            }
+            
             //TODO
         }
         else {

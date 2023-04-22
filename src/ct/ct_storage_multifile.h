@@ -48,7 +48,7 @@ public:
     void vacuum() override {}
 
     bool populate_treestore(const fs::path& file_path, Glib::ustring& error) override;
-    bool save_treestore(const fs::path& file_path,
+    bool save_treestore(const fs::path& dir_path,
                         const CtStorageSyncPending& syncPending,
                         Glib::ustring& error,
                         const CtExporting exporting = CtExporting::NONE,
