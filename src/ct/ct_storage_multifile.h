@@ -38,6 +38,9 @@ class CtStorageCache;
 class CtStorageMultiFile : public CtStorageEntity
 {
 public:
+    static const std::string SUBNODES_XML;
+    static const std::string NODE_XML;
+
     CtStorageMultiFile(CtMainWin* pCtMainWin)
      : _pCtMainWin{pCtMainWin}
     {}
@@ -63,4 +66,11 @@ public:
 private:
     CtMainWin* const _pCtMainWin;
     fs::path         _dir_path;
+
+    void _nodes_to_multifile(CtTreeIter* ct_tree_iter,
+                             xmlpp::Element* p_node_parent,
+                             CtStorageCache* storage_cache,
+                             const CtExporting exporting = CtExporting::NONE,
+                             const int start_offset = 0,
+                             const int end_offset =-1);
 };
