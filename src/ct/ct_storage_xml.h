@@ -89,7 +89,7 @@ public:
 
     xmlpp::Element* node_to_xml(CtTreeIter* ct_tree_iter,
                                 xmlpp::Element* p_node_parent,
-                                bool with_widgets,
+                                const std::string& multifile_dir,
                                 CtStorageCache* storage_cache,
                                 const int start_offset = 0,
                                 const int end_offset = -1);

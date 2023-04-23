@@ -223,19 +223,19 @@ void CtStorageXml::_nodes_to_xml(CtTreeIter* ct_tree_iter,
                                  const int start_offset/*= 0*/,
                                  const int end_offset/*=-1*/)
 {
-    xmlpp::Element* p_node_node =  CtStorageXmlHelper(_pCtMainWin).node_to_xml(
+    xmlpp::Element* p_node_node =  CtStorageXmlHelper{_pCtMainWin}.node_to_xml(
         ct_tree_iter,
         p_node_parent,
-        true,
+        std::string{}/*multifile_dir*/,
         storage_cache,
         start_offset,
         end_offset
     );
     if ( CtExporting::CURRENT_NODE != exporting and
-         CtExporting::SELECTED_TEXT != exporting ) {
+         CtExporting::SELECTED_TEXT != exporting )
+    {
         CtTreeIter ct_tree_iter_child = ct_tree_iter->first_child();
-        while (ct_tree_iter_child)
-        {
+        while (ct_tree_iter_child) {
             _nodes_to_xml(&ct_tree_iter_child, p_node_node, storage_cache, exporting, start_offset, end_offset);
             ct_tree_iter_child++;
         }
@@ -273,7 +273,7 @@ void CtStorageXml::_nodes_to_xml(CtTreeIter* ct_tree_iter,
 
 xmlpp::Element* CtStorageXmlHelper::node_to_xml(CtTreeIter* ct_tree_iter,
                                                 xmlpp::Element* p_node_parent,
-                                                bool with_widgets,
+                                                const std::string& multifile_dir,
                                                 CtStorageCache* storage_cache,
                                                 const int start_offset/*= 0*/,
                                                 const int end_offset/*=-1*/)
@@ -295,10 +295,8 @@ xmlpp::Element* CtStorageXmlHelper::node_to_xml(CtTreeIter* ct_tree_iter,
     Glib::RefPtr<Gsv::Buffer> buffer = ct_tree_iter->get_node_text_buffer();
     save_buffer_no_widgets_to_xml(p_node_node, buffer, start_offset, end_offset, 'n');
 
-    if (with_widgets) {
-        for (CtAnchoredWidget* pAnchoredWidget : ct_tree_iter->get_anchored_widgets(start_offset, end_offset)) {
-            pAnchoredWidget->to_xml(p_node_node, start_offset > 0 ? -start_offset : 0, storage_cache);
-        }
+    for (CtAnchoredWidget* pAnchoredWidget : ct_tree_iter->get_anchored_widgets(start_offset, end_offset)) {
+        pAnchoredWidget->to_xml(p_node_node, start_offset > 0 ? -start_offset : 0, storage_cache, multifile_dir);
     }
     return p_node_node;
 }

@@ -48,9 +48,9 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
         if (_dir_path.empty()) {
             // it's the first time (or an export), a new folder will be created
             if (fs::is_directory(dir_path)) {
-                auto message = str::format(_("A Folder with Name '%s' Already Exists in '%s'"),
+                auto message = str::format(_("A folder with name '%s' already exists in '%s'.\n<b>Do you want to remove it?</b>"),
                     str::xml_escape(dir_path.filename().string()), str::xml_escape(dir_path.parent_path().string()));
-                if (not CtDialogs::question_dialog(message + "\n" + _("Do you want to Overwrite?"), *_pCtMainWin)) {
+                if (not CtDialogs::question_dialog(message, *_pCtMainWin)) {
                     return false;
                 }
                 (void)fs::remove_all(dir_path);
@@ -65,14 +65,14 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
             }
             _dir_path = dir_path;
 
-            xmlpp::Document xml_doc;
-            xml_doc.create_root_node(CtConst::APP_NAME);
+            xmlpp::Document xml_doc_subnodes;
+            xml_doc_subnodes.create_root_node(CtConst::APP_NAME);
 
             if ( CtExporting::NONE == exporting or
                  CtExporting::ALL_TREE == exporting )
             {
                 // save bookmarks
-                xmlpp::Element* p_bookmarks_node = xml_doc.get_root_node()->add_child("bookmarks");
+                xmlpp::Element* p_bookmarks_node = xml_doc_subnodes.get_root_node()->add_child("bookmarks");
                 p_bookmarks_node->set_attribute("list", str::join_numbers(_pCtMainWin->get_tree_store().bookmarks_get(), ","));
             }
 
@@ -102,11 +102,11 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
             }
 
             // save subnodes
-            xmlpp::Element* p_bookmarks_node = xml_doc.get_root_node()->add_child("subnodes");
+            xmlpp::Element* p_bookmarks_node = xml_doc_subnodes.get_root_node()->add_child("subnodes");
             p_bookmarks_node->set_attribute("list", str::join_numbers(subnodes, ","));
 
             // write file
-            xml_doc.write_to_file_formatted(Glib::build_filename(dir_path.string(), SUBNODES_XML));
+            xml_doc_subnodes.write_to_file_formatted(Glib::build_filename(dir_path.string(), SUBNODES_XML));
         }
         else {
             // or need just update some info
@@ -118,19 +118,6 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
         error = e.what();
         return false;
     }
-}
-
-void CtStorageMultiFile::import_nodes(const fs::path& file_path, const Gtk::TreeIter& parent_iter)
-{
-    //TODO
-}
-
-Glib::RefPtr<Gsv::Buffer> CtStorageMultiFile::get_delayed_text_buffer(const gint64& node_id,
-                                                                      const std::string& syntax,
-                                                                      std::list<CtAnchoredWidget*>& widgets) const
-{
-    //TODO
-    return Glib::RefPtr<Gsv::Buffer>{};
 }
 
 bool CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
@@ -146,24 +133,63 @@ bool CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
         error = Glib::ustring{"failed to create "} + dir_path.string();
         return false;
     }
-#if 0
-    xmlpp::Element* p_node_node = CtStorageXmlHelper(_pCtMainWin).node_to_xml(
-        ct_tree_iter,
-        p_node_parent,
-        true,
-        storage_cache,
-        start_offset,
-        end_offset
-    );
+    {
+        xmlpp::Document xml_doc_node;
+        xml_doc_node.create_root_node(CtConst::APP_NAME);
+
+        (void)CtStorageXmlHelper{_pCtMainWin}.node_to_xml(
+            ct_tree_iter,
+            xml_doc_node.get_root_node(),
+            dir_path.string()/*multifile_dir*/,
+            storage_cache,
+            start_offset,
+            end_offset
+        );
+
+        // write file
+        xml_doc_node.write_to_file_formatted(Glib::build_filename(dir_path.string(), NODE_XML));
+    }
     if ( CtExporting::CURRENT_NODE != exporting and
-         CtExporting::SELECTED_TEXT != exporting ) {
+         CtExporting::SELECTED_TEXT != exporting )
+    {
         CtTreeIter ct_tree_iter_child = ct_tree_iter->first_child();
-        while (ct_tree_iter_child)
-        {
-            _nodes_to_multifile(&ct_tree_iter_child, p_node_node, storage_cache, exporting, start_offset, end_offset);
-            ct_tree_iter_child++;
+        if (ct_tree_iter_child) {
+
+            xmlpp::Document xml_doc_subnodes;
+            xml_doc_subnodes.create_root_node(CtConst::APP_NAME);
+            std::list<gint64> subnodes;
+
+            while (true) {
+                subnodes.push_back(ct_tree_iter_child.get_node_id());
+                if (not _nodes_to_multifile(&ct_tree_iter_child, dir_path, error, storage_cache, exporting, start_offset, end_offset)) {
+                    return false;
+                }
+                ct_tree_iter_child++;
+                if (not ct_tree_iter_child) {
+                    break;
+                }
+            }
+
+            // save subnodes
+            xmlpp::Element* p_bookmarks_node = xml_doc_subnodes.get_root_node()->add_child("subnodes");
+            p_bookmarks_node->set_attribute("list", str::join_numbers(subnodes, ","));
+
+            // write file
+            xml_doc_subnodes.write_to_file_formatted(Glib::build_filename(dir_path.string(), SUBNODES_XML));
         }
     }
-#endif // 0
     return true;
+}
+
+void CtStorageMultiFile::import_nodes(const fs::path& file_path, const Gtk::TreeIter& parent_iter)
+{
+    //TODO
+}
+
+Glib::RefPtr<Gsv::Buffer> CtStorageMultiFile::get_delayed_text_buffer(const gint64& node_id,
+                                                                      const std::string& syntax,
+                                                                      std::list<CtAnchoredWidget*>& widgets) const
+{
+    //TODO
+    return Glib::RefPtr<Gsv::Buffer>{};
 }
