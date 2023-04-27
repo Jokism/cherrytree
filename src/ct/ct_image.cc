@@ -133,7 +133,7 @@ void CtImagePng::to_xml(xmlpp::Element* p_node_parent,
         }
         const std::string sha256sum = Glib::Checksum::compute_checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256, rawBlob);
         p_image_node->set_attribute("sha256sum", sha256sum);
-        const std::string filepath = Glib::build_filename(multifile_dir, sha256sum);
+        const std::string filepath = Glib::build_filename(multifile_dir, sha256sum + ".png");
         if (not Glib::file_test(filepath, Glib::FILE_TEST_IS_REGULAR)) {
             Glib::file_set_contents(filepath, rawBlob);
         }
@@ -523,7 +523,7 @@ void CtImageEmbFile::to_xml(xmlpp::Element* p_node_parent,
     else {
         const std::string sha256sum = Glib::Checksum::compute_checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256, _rawBlob);
         p_image_node->set_attribute("sha256sum", sha256sum);
-        const std::string filepath = Glib::build_filename(multifile_dir, sha256sum);
+        const std::string filepath = Glib::build_filename(multifile_dir, sha256sum + _fileName.extension());
         if (not Glib::file_test(filepath, Glib::FILE_TEST_IS_REGULAR)) {
             Glib::file_set_contents(filepath, _rawBlob);
         }

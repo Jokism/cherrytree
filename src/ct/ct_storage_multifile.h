@@ -38,7 +38,8 @@ class CtStorageCache;
 class CtStorageMultiFile : public CtStorageEntity
 {
 public:
-    static const std::string SUBNODES_XML;
+    static const std::string SUBNODES_LST;
+    static const std::string BOOKMARKS_LST;
     static const std::string NODE_XML;
 
     CtStorageMultiFile(CtMainWin* pCtMainWin)
