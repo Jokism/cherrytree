@@ -64,11 +64,7 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
                  CtExporting::ALL_TREE == exporting )
             {
                 // save bookmarks
-                const std::list<gint64>& bookmarks_list = _pCtMainWin->get_tree_store().bookmarks_get();
-                if (not bookmarks_list.empty()) {
-                    Glib::file_set_contents(Glib::build_filename(dir_path.string(), BOOKMARKS_LST),
-                                            str::join_numbers(bookmarks_list, ","));
-                }
+                _write_bookmarks_to_disk(_pCtMainWin->get_tree_store().bookmarks_get());
             }
 
             CtStorageCache storage_cache;
@@ -102,13 +98,64 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
         }
         else {
             // or need just update some info
+            CtStorageCache storage_cache;
+            storage_cache.generate_cache(_pCtMainWin, &syncPending, false/*for_xml*/);
+
+            // update bookmarks
+            if (syncPending.bookmarks_to_write) {
+                _write_bookmarks_to_disk(_pCtMainWin->get_tree_store().bookmarks_get());
+            }
+#if 0
             //TODO
+            // update changed nodes
+            for (const auto& node_pair : syncPending.nodes_to_write_dict) {
+                CtTreeIter ct_tree_iter = _pCtMainWin->get_tree_store().get_node_from_node_id(node_pair.first);
+                CtTreeIter ct_tree_iter_parent = ct_tree_iter.parent();
+                _write_node_to_db(&ct_tree_iter, ct_tree_iter.get_node_sequence(),
+                                  ct_tree_iter_parent ? ct_tree_iter_parent.get_node_id() : 0, node_pair.second, 0, -1, &storage_cache);
+            }
+#endif
+            // remove nodes and their sub nodes
+            for (const auto node_id : syncPending.nodes_to_rm_set) {
+                _remove_disk_node_with_children(node_id);
+            }
         }
         return true;
     }
     catch (std::exception& e) {
         error = e.what();
         return false;
+    }
+}
+
+fs::path CtStorageMultiFile::_get_node_dirpath(const gint64 node_id)
+{
+    CtTreeIter tree_iter = _pCtMainWin->get_tree_store().get_node_from_node_id(node_id);
+    if (not tree_iter) {
+        return fs::path{};
+    }
+    fs::path hierarchical_path{std::to_string(node_id)};
+    CtTreeIter father_iter = tree_iter.parent();
+    while (father_iter) {
+        hierarchical_path = fs::path{std::to_string(father_iter.get_node_id())} / hierarchical_path;
+        father_iter = father_iter.parent();
+    }
+    return _dir_path / hierarchical_path;
+}
+
+void CtStorageMultiFile::_remove_disk_node_with_children(const gint64 node_id)
+{
+    const fs::path node_dirpath = _get_node_dirpath(node_id);
+    (void)fs::remove_all(node_dirpath);
+}
+
+void CtStorageMultiFile::_write_bookmarks_to_disk(const std::list<gint64>& bookmarks_list)
+{
+    const fs::path bookmarks_filepath = _dir_path / BOOKMARKS_LST;
+    (void)fs::remove(bookmarks_filepath);
+    if (not bookmarks_list.empty()) {
+        Glib::file_set_contents(bookmarks_filepath.string(),
+                                str::join_numbers(bookmarks_list, ","));
     }
 }
 
