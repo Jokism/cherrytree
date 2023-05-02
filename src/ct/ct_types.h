@@ -54,7 +54,7 @@ enum class CtSaveNeededUpdType { None, nbuf, npro, ndel, book };
 
 enum class CtXmlNodeType { None, RichText, EncodedPng, Table, CodeBox };
 
-enum class CtExporting { NONE, SELECTED_TEXT, CURRENT_NODE, CURRENT_NODE_AND_SUBNODES, ALL_TREE };
+enum class CtExporting { NONESAVE, NONESAVEAS, SELECTED_TEXT, CURRENT_NODE, CURRENT_NODE_AND_SUBNODES, ALL_TREE };
 
 enum class CtListType { None, Todo, Bullet, Number };
 
@@ -268,7 +268,7 @@ public:
     virtual bool save_treestore(const fs::path& file_path,
                                 const CtStorageSyncPending& syncPending,
                                 Glib::ustring& error,
-                                const CtExporting exporting = CtExporting::NONE,
+                                const CtExporting exporting,
                                 const int start_offset = 0,
                                 const int end_offset = -1) = 0;
     virtual void vacuum() = 0;

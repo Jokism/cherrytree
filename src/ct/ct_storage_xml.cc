@@ -84,7 +84,7 @@ bool CtStorageXml::populate_treestore(const fs::path& file_path, Glib::ustring& 
 bool CtStorageXml::save_treestore(const fs::path& file_path,
                                   const CtStorageSyncPending&,
                                   Glib::ustring& error,
-                                  const CtExporting exporting/*= CtExporting::NONE*/,
+                                  const CtExporting exporting,
                                   const int start_offset/*= 0*/,
                                   const int end_offset/*=-1*/)
 {
@@ -92,8 +92,10 @@ bool CtStorageXml::save_treestore(const fs::path& file_path,
         xmlpp::Document xml_doc;
         xml_doc.create_root_node(CtConst::APP_NAME);
 
-        if ( CtExporting::NONE == exporting or
-             CtExporting::ALL_TREE == exporting ) {
+        if ( CtExporting::NONESAVE == exporting or
+             CtExporting::NONESAVEAS == exporting or
+             CtExporting::ALL_TREE == exporting )
+        {
             // save bookmarks
             xmlpp::Element* p_bookmarks_node = xml_doc.get_root_node()->add_child("bookmarks");
             p_bookmarks_node->set_attribute("list", str::join_numbers(_pCtMainWin->get_tree_store().bookmarks_get(), ","));
@@ -103,8 +105,10 @@ bool CtStorageXml::save_treestore(const fs::path& file_path,
         storage_cache.generate_cache(_pCtMainWin, nullptr, true/*for_xml*/);
 
         // save nodes
-        if ( CtExporting::NONE == exporting or
-             CtExporting::ALL_TREE == exporting ) {
+        if ( CtExporting::NONESAVE == exporting or
+             CtExporting::NONESAVEAS == exporting or
+             CtExporting::ALL_TREE == exporting )
+        {
             auto ct_tree_iter = _pCtMainWin->get_tree_store().get_ct_iter_first();
             while (ct_tree_iter) {
                 _nodes_to_xml(&ct_tree_iter, xml_doc.get_root_node(), &storage_cache, exporting, start_offset, end_offset);
@@ -219,7 +223,7 @@ Gtk::TreeIter CtStorageXml::_node_from_xml(xmlpp::Element* xml_element, gint64 s
 void CtStorageXml::_nodes_to_xml(CtTreeIter* ct_tree_iter,
                                  xmlpp::Element* p_node_parent,
                                  CtStorageCache* storage_cache,
-                                 const CtExporting exporting/*= CtExporting::NONE*/,
+                                 const CtExporting exporting,
                                  const int start_offset/*= 0*/,
                                  const int end_offset/*=-1*/)
 {

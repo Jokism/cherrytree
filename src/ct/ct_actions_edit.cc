@@ -434,7 +434,7 @@ void CtActions::toc_insert()
 
     auto toc_type = CtDialogs::selnode_selnodeandsub_alltree_dialog(*_pCtMainWin, false, nullptr, nullptr, nullptr, nullptr);
 
-    if (toc_type == CtExporting::NONE) return;
+    if (CtExporting::NONESAVE == toc_type) return;
 
     std::list<TocEntry> entries;
     CtTreeIter curr_node = _pCtMainWin->curr_tree_iter();

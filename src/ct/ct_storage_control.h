@@ -40,7 +40,7 @@ public:
                                      const fs::path& file_path,
                                      const Glib::ustring& password,
                                      Glib::ustring& error,
-                                     const CtExporting exporting = CtExporting::NONE,
+                                     const CtExporting exporting,
                                      const int start_offset = 0,
                                      const int end_offset = -1);
     static bool document_integrity_check_pass(CtMainWin* pCtMainWin,

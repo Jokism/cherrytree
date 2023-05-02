@@ -35,7 +35,7 @@
 bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
                                         const CtStorageSyncPending& syncPending,
                                         Glib::ustring& error,
-                                        const CtExporting exporting/*= CtExporting::NONE*/,
+                                        const CtExporting exporting,
                                         const int start_offset/*= 0*/,
                                         const int end_offset/*= -1*/)
 {
@@ -60,12 +60,17 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
             }
             _dir_path = dir_path;
 
-            if ( CtExporting::NONE == exporting or
+            if ( CtExporting::NONESAVEAS == exporting or
                  CtExporting::ALL_TREE == exporting )
             {
                 // save bookmarks
                 _write_bookmarks_to_disk(_pCtMainWin->get_tree_store().bookmarks_get());
             }
+            CtStorageNodeState node_state;
+            node_state.is_update_of_existing = false; // no need to delete the prev data
+            node_state.prop = true;
+            node_state.buff = true;
+            node_state.hier = true;
 
             CtStorageCache storage_cache;
             storage_cache.generate_cache(_pCtMainWin, nullptr/*all nodes*/, false/*for_xml*/);
@@ -73,12 +78,22 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
             std::list<gint64> subnodes_list;
 
             // save nodes
-            if ( CtExporting::NONE == exporting or
-                 CtExporting::ALL_TREE == exporting ) {
+            if ( CtExporting::NONESAVEAS == exporting or
+                 CtExporting::ALL_TREE == exporting )
+            {
                 auto ct_tree_iter = _pCtMainWin->get_tree_store().get_ct_iter_first();
                 while (ct_tree_iter) {
-                    subnodes_list.push_back(ct_tree_iter.get_node_id());
-                    if (not _nodes_to_multifile(&ct_tree_iter, dir_path, error, &storage_cache, exporting, start_offset, end_offset)) {
+                    const auto node_id = ct_tree_iter.get_node_id();
+                    subnodes_list.push_back(node_id);
+                    if (not _nodes_to_multifile(&ct_tree_iter,
+                                                dir_path / std::to_string(node_id),
+                                                error,
+                                                &storage_cache,
+                                                node_state,
+                                                exporting,
+                                                start_offset,
+                                                end_offset))
+                    {
                         return false;
                     }
                     ct_tree_iter++;
@@ -86,8 +101,17 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
             }
             else {
                 CtTreeIter ct_tree_iter = _pCtMainWin->curr_tree_iter();
-                subnodes_list.push_back(ct_tree_iter.get_node_id());
-                if (not _nodes_to_multifile(&ct_tree_iter, dir_path, error, &storage_cache, exporting, start_offset, end_offset)) {
+                const auto node_id = ct_tree_iter.get_node_id();
+                subnodes_list.push_back(node_id);
+                if (not _nodes_to_multifile(&ct_tree_iter,
+                                            dir_path / std::to_string(node_id),
+                                            error,
+                                            &storage_cache,
+                                            node_state,
+                                            exporting,
+                                            start_offset,
+                                            end_offset))
+                {
                     return false;
                 }
             }
@@ -105,16 +129,19 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
             if (syncPending.bookmarks_to_write) {
                 _write_bookmarks_to_disk(_pCtMainWin->get_tree_store().bookmarks_get());
             }
-#if 0
-            //TODO
             // update changed nodes
             for (const auto& node_pair : syncPending.nodes_to_write_dict) {
                 CtTreeIter ct_tree_iter = _pCtMainWin->get_tree_store().get_node_from_node_id(node_pair.first);
                 CtTreeIter ct_tree_iter_parent = ct_tree_iter.parent();
-                _write_node_to_db(&ct_tree_iter, ct_tree_iter.get_node_sequence(),
-                                  ct_tree_iter_parent ? ct_tree_iter_parent.get_node_id() : 0, node_pair.second, 0, -1, &storage_cache);
+                _nodes_to_multifile(&ct_tree_iter,
+                                    _get_node_dirpath(node_pair.first),
+                                    error,
+                                    &storage_cache,
+                                    node_pair.second,
+                                    exporting,
+                                    0,
+                                    -1);
             }
-#endif
             // remove nodes and their sub nodes
             for (const auto node_id : syncPending.nodes_to_rm_set) {
                 _remove_disk_node_with_children(node_id);
@@ -160,14 +187,15 @@ void CtStorageMultiFile::_write_bookmarks_to_disk(const std::list<gint64>& bookm
 }
 
 bool CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
-                                             const fs::path& parent_dir_path,
+                                             const fs::path& dir_path,
                                              Glib::ustring& error,
                                              CtStorageCache* storage_cache,
-                                             const CtExporting exporting/*= CtExporting::NONE*/,
+                                             const CtStorageNodeState& node_state,
+                                             const CtExporting exporting,
                                              const int start_offset/*= 0*/,
                                              const int end_offset/*=-1*/)
 {
-    const fs::path dir_path = parent_dir_path / std::to_string(ct_tree_iter->get_node_id());
+    // TODO support CtExporting::NONESAVE and node_state
     if (g_mkdir(dir_path.c_str(), 0755) < 0) {
         error = Glib::ustring{"failed to create "} + dir_path.string();
         return false;
@@ -188,7 +216,8 @@ bool CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
         // write file
         xml_doc_node.write_to_file_formatted(Glib::build_filename(dir_path.string(), NODE_XML));
     }
-    if ( CtExporting::CURRENT_NODE != exporting and
+    if ( CtExporting::NONESAVE != exporting and
+         CtExporting::CURRENT_NODE != exporting and
          CtExporting::SELECTED_TEXT != exporting )
     {
         CtTreeIter ct_tree_iter_child = ct_tree_iter->first_child();
@@ -198,7 +227,15 @@ bool CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
 
             while (true) {
                 subnodes_list.push_back(ct_tree_iter_child.get_node_id());
-                if (not _nodes_to_multifile(&ct_tree_iter_child, dir_path, error, storage_cache, exporting, start_offset, end_offset)) {
+                if (not _nodes_to_multifile(&ct_tree_iter_child,
+                                            dir_path,
+                                            error,
+                                            storage_cache,
+                                            node_state,
+                                            exporting,
+                                            start_offset,
+                                            end_offset))
+                {
                     return false;
                 }
                 ct_tree_iter_child++;

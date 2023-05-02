@@ -68,7 +68,7 @@ void CtActions::export_to_ctd()
         nullptr/*last_index_in_page*/,
         nullptr/*last_single_file*/
     );
-    if (CtExporting::NONE == export_type) {
+    if (CtExporting::NONESAVE == export_type) {
         return;
     }
     int start_offset{0};
@@ -167,7 +167,7 @@ void CtActions::_export_print(bool save_to_pdf, const fs::path& auto_path, bool 
         export_type = CtDialogs::selnode_selnodeandsub_alltree_dialog(*_pCtMainWin, true, &_export_options.include_node_name,
                                                                       &_export_options.new_node_page, nullptr, nullptr);
     }
-    if (export_type == CtExporting::NONE) return;
+    if (export_type == CtExporting::NONESAVE) return;
 
     fs::path pdf_filepath;
     if (export_type == CtExporting::CURRENT_NODE)
@@ -236,7 +236,7 @@ void CtActions::_export_to_html(const fs::path& auto_path, bool auto_overwrite)
         export_type = CtDialogs::selnode_selnodeandsub_alltree_dialog(*_pCtMainWin, true, &_export_options.include_node_name,
                                                                       nullptr, &_export_options.index_in_page, &_export_options.single_file);
     }
-    if (export_type == CtExporting::NONE) return;
+    if (export_type == CtExporting::NONESAVE) return;
 
     CtExport2Html export2html(_pCtMainWin);
     fs::path ret_html_path;
@@ -297,7 +297,7 @@ void CtActions::_export_to_txt(const fs::path& auto_path, bool auto_overwrite)
         if (!_is_there_selected_node_or_error()) return;
         export_type = CtDialogs::selnode_selnodeandsub_alltree_dialog(*_pCtMainWin, true, &_export_options.include_node_name, nullptr, nullptr, &_export_options.single_file);
     }
-    if (export_type == CtExporting::NONE) return;
+    if (export_type == CtExporting::NONESAVE) return;
 
     if (export_type == CtExporting::CURRENT_NODE)
     {

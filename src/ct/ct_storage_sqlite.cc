@@ -262,7 +262,7 @@ bool CtStorageSqlite::populate_treestore(const fs::path& file_path, Glib::ustrin
 bool CtStorageSqlite::save_treestore(const fs::path& file_path,
                                      const CtStorageSyncPending& syncPending,
                                      Glib::ustring& error,
-                                     const CtExporting exporting/*= CtExporting::NONE*/,
+                                     const CtExporting exporting,
                                      const int start_offset/*= 0*/,
                                      const int end_offset/*= -1*/)
 {
@@ -273,7 +273,7 @@ bool CtStorageSqlite::save_treestore(const fs::path& file_path,
             _file_path = file_path;
 
             _create_all_tables_in_db();
-            if ( CtExporting::NONE == exporting or
+            if ( CtExporting::NONESAVEAS == exporting or
                  CtExporting::ALL_TREE == exporting )
             {
                 _write_bookmarks_to_db(_pCtMainWin->get_tree_store().bookmarks_get());
@@ -306,7 +306,7 @@ bool CtStorageSqlite::save_treestore(const fs::path& file_path,
 
             // saving nodes
             gint64 sequence{0};
-            if ( CtExporting::NONE == exporting or
+            if ( CtExporting::NONESAVEAS == exporting or
                  CtExporting::ALL_TREE == exporting )
             {
                 CtTreeIter ct_tree_iter = _pCtMainWin->get_tree_store().get_ct_iter_first();

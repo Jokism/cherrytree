@@ -58,7 +58,7 @@ public:
     bool save_treestore(const fs::path& file_path,
                         const CtStorageSyncPending& syncPending,
                         Glib::ustring& error,
-                        const CtExporting exporting = CtExporting::NONE,
+                        const CtExporting exporting,
                         const int start_offset = 0,
                         const int end_offset = -1) override;
     void import_nodes(const fs::path& path, const Gtk::TreeIter& parent_iter) override;
@@ -71,7 +71,7 @@ private:
     void _nodes_to_xml(CtTreeIter* ct_tree_iter,
                        xmlpp::Element* p_node_parent,
                        CtStorageCache* storage_cache,
-                       const CtExporting exporting = CtExporting::NONE,
+                       const CtExporting exporting,
                        const int start_offset = 0,
                        const int end_offset =-1);
 

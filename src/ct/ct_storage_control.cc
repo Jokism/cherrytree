@@ -117,7 +117,7 @@
                                                       const fs::path& file_path,
                                                       const Glib::ustring& password,
                                                       Glib::ustring& error,
-                                                      const CtExporting exporting/*= CtExporting::NONE*/,
+                                                      const CtExporting exporting,
                                                       const int start_offset/*= 0*/,
                                                       const int end_offset/*= -1*/)
 {
@@ -230,7 +230,7 @@ bool CtStorageControl::save(bool need_vacuum, Glib::ustring &error)
             }
         }
         // save changes
-        if (not _storage->save_treestore(_extracted_file_path, _syncPending, error)) {
+        if (not _storage->save_treestore(_extracted_file_path, _syncPending, error, CtExporting::NONESAVE)) {
             throw std::runtime_error(error);
         }
 #if defined(DEBUG_BACKUP_ENCRYPT)

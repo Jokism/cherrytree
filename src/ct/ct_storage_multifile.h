@@ -55,7 +55,7 @@ public:
     bool save_treestore(const fs::path& dir_path,
                         const CtStorageSyncPending& syncPending,
                         Glib::ustring& error,
-                        const CtExporting exporting = CtExporting::NONE,
+                        const CtExporting exporting,
                         const int start_offset = 0,
                         const int end_offset = -1) override;
     void import_nodes(const fs::path& file_path, const Gtk::TreeIter& parent_iter) override;
@@ -75,7 +75,8 @@ private:
                              const fs::path& parent_dir_path,
                              Glib::ustring& error,
                              CtStorageCache* storage_cache,
-                             const CtExporting exporting = CtExporting::NONE,
+                             const CtStorageNodeState& node_state,
+                             const CtExporting exporting,
                              const int start_offset = 0,
                              const int end_offset =-1);
 };
