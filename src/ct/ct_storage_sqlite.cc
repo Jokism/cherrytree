@@ -127,7 +127,7 @@ private:
 
 std::optional<std::vector<std::string>> get_quick_check_issues(sqlite3* db)
 {
-    if (!db) throw std::logic_error("get_quick_check_issues passed invalid database object");
+    if (not db) throw std::logic_error("get_quick_check_issues passed invalid database object");
 
     Sqlite3StmtAuto stmt{db, "PRAGMA quick_check"};
 
@@ -148,7 +148,7 @@ std::optional<std::vector<std::string>> get_quick_check_issues(sqlite3* db)
 bool CtStorageSqlite::_check_database_integrity()
 {
     auto corrupted_rows = get_quick_check_issues(_pDb);
-    if (!corrupted_rows) return true;
+    if (not corrupted_rows) return true;
 
     // Database is corrupted
     std::string log_msg = "\n=== Database problems report ===\n";
@@ -211,9 +211,9 @@ void CtStorageSqlite::test_connection()
         spdlog::debug("{} {}", __FUNCTION__, e.what());
         throw std::runtime_error(str::format(_("%s write failed - file is missing. Reattach USB driver or shared resource!"), _file_path));
     }
-    if (!test_readwrite())
+    if (not test_readwrite())
         throw std::runtime_error(str::format(_("%s write failed - is file blocked by a sync program?"), _file_path));
-    if (!_check_database_integrity()) return;
+    if (not _check_database_integrity()) return;
 }
 
 bool CtStorageSqlite::populate_treestore(const fs::path& file_path, Glib::ustring& error)
@@ -224,7 +224,7 @@ bool CtStorageSqlite::populate_treestore(const fs::path& file_path, Glib::ustrin
         _open_db(file_path);
         _file_path = file_path;
 
-        if (!_check_database_integrity()) return false;
+        if (not _check_database_integrity()) return false;
 
         // load bookmarks
         Sqlite3StmtAuto stmt{_pDb, "SELECT node_id FROM bookmark ORDER BY sequence ASC"};
@@ -288,8 +288,8 @@ bool CtStorageSqlite::save_treestore(const fs::path& file_path,
             storage_cache.generate_cache(_pCtMainWin, nullptr/*all nodes*/, false/*for_xml*/);
 
             // function to iterate through the tree
-            std::function<void(CtTreeIter, const gint64, const gint64)> save_node_fun;
-            save_node_fun = [&](CtTreeIter ct_tree_iter, const gint64 sequence, const gint64 father_id) {
+            std::function<void(CtTreeIter, const gint64, const gint64)> f_save_node;
+            f_save_node = [&](CtTreeIter ct_tree_iter, const gint64 sequence, const gint64 father_id) {
                 _write_node_to_db(&ct_tree_iter, sequence, father_id, node_state, start_offset, end_offset, &storage_cache);
                 if ( CtExporting::CURRENT_NODE != exporting and
                      CtExporting::SELECTED_TEXT != exporting )
@@ -298,7 +298,7 @@ bool CtStorageSqlite::save_treestore(const fs::path& file_path,
                     CtTreeIter ct_tree_iter_child = ct_tree_iter.first_child();
                     while (ct_tree_iter_child) {
                         ++child_sequence;
-                        save_node_fun(ct_tree_iter_child, child_sequence, ct_tree_iter.get_node_id());
+                        f_save_node(ct_tree_iter_child, child_sequence, ct_tree_iter.get_node_id());
                         ++ct_tree_iter_child;
                     }
                 }
@@ -312,13 +312,13 @@ bool CtStorageSqlite::save_treestore(const fs::path& file_path,
                 CtTreeIter ct_tree_iter = _pCtMainWin->get_tree_store().get_ct_iter_first();
                 while (ct_tree_iter) {
                     ++sequence;
-                    save_node_fun(ct_tree_iter, sequence, 0);
+                    f_save_node(ct_tree_iter, sequence, 0);
                     ++ct_tree_iter;
                 }
             }
             else {
                 CtTreeIter ct_tree_iter = _pCtMainWin->curr_tree_iter();
-                save_node_fun(ct_tree_iter, sequence, 0);
+                f_save_node(ct_tree_iter, sequence, 0);
             }
         }
         // or need just update some info
@@ -374,7 +374,7 @@ void CtStorageSqlite::_open_db(const fs::path& path)
 
 void CtStorageSqlite::_close_db()
 {
-    if (!_pDb) return;
+    if (not _pDb) return;
     sqlite3_close(_pDb);
     _pDb = nullptr;
     //_file_path = ""; we need file_path for reconnection
@@ -453,7 +453,7 @@ Glib::RefPtr<Gsv::Buffer> CtStorageSqlite::get_delayed_text_buffer(const gint64&
     }
     else {
         rRetTextBuffer = CtStorageXmlHelper{_pCtMainWin}.create_buffer_no_widgets(syntax, textContent);
-        if (!rRetTextBuffer) {
+        if (not rRetTextBuffer) {
             spdlog::error("!! xml read: {}", textContent);
             return rRetTextBuffer;
         }
@@ -488,7 +488,7 @@ void CtStorageSqlite::_image_from_db(const gint64& nodeId, std::list<CtAnchoredW
 
         // image
         const Glib::ustring anchorName = safe_sqlite3_column_text(stmt, 3);
-        if (!anchorName.empty()) {
+        if (not anchorName.empty()) {
             anchoredWidgets.push_back(new CtImageAnchor{_pCtMainWin, anchorName, charOffset, justification});
         }
         else {
@@ -496,7 +496,7 @@ void CtStorageSqlite::_image_from_db(const gint64& nodeId, std::list<CtAnchoredW
             const void* pBlob = sqlite3_column_blob(stmt, 4);
             const int blobSize = sqlite3_column_bytes(stmt, 4);
             const std::string rawBlob(reinterpret_cast<const char*>(pBlob), static_cast<size_t>(blobSize));
-            if (!fileName.empty()) {
+            if (not fileName.empty()) {
                 if (fileName == CtImageLatex::LatexSpecialFilename) {
                     anchoredWidgets.push_back(new CtImageLatex{_pCtMainWin,
                                                                rawBlob,
@@ -652,57 +652,60 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
         exclude_from_search |= 0x02;
     }
 
-    bool remove_prev_widgets = node_state.is_update_of_existing and node_state.buff;
-    bool remove_prev_node = node_state.is_update_of_existing and node_state.buff && node_state.prop;
-    bool remove_prev_hier = node_state.is_update_of_existing and node_state.hier;
-
-    // remove previous data in case full update (skip when add new or partial update
-    if (remove_prev_widgets) {
-        _exec_bind_int64(TABLE_CODEBOX_DELETE, node_id);
-        _exec_bind_int64(TABLE_TABLE_DELETE, node_id);
-        _exec_bind_int64(TABLE_IMAGE_DELETE, node_id);
-    }
-    if (remove_prev_node)
+    // TODO COMPLETE REVIEW REMOVE THIS DECOUPLED remove_prev_node
+    const bool remove_prev_node = node_state.is_update_of_existing and node_state.buff and node_state.prop;
+    if (remove_prev_node) {
         _exec_bind_int64(TABLE_NODE_DELETE, node_id);
-    if (remove_prev_hier)
-        _exec_bind_int64(TABLE_CHILDREN_DELETE, node_id);
-
-    bool has_codebox{false};
-    bool has_table{false};
-    bool has_image{false};
+    }
 
     // write hier
     if (node_state.hier) {
+        if (node_state.is_update_of_existing) {
+            // clear old hierarchy
+            _exec_bind_int64(TABLE_CHILDREN_DELETE, node_id);
+        }
         Sqlite3StmtAuto stmt{_pDb, TABLE_CHILDREN_INSERT};
         if (stmt.is_bad())
             throw std::runtime_error(ERR_SQLITE_PREPV2 + sqlite3_errmsg(_pDb));
         sqlite3_bind_int64(stmt, 1, node_id);
         sqlite3_bind_int64(stmt, 2, node_father_id);
         sqlite3_bind_int64(stmt, 3, sequence);
-        if (sqlite3_step(stmt) != SQLITE_DONE)
+        if (sqlite3_step(stmt) != SQLITE_DONE) {
             throw std::runtime_error(ERR_SQLITE_STEP + sqlite3_errmsg(_pDb));
+        }
     }
 
     // write widgets
-    if (node_state.buff && (is_richtxt & 0x01)) {
-        for (CtAnchoredWidget* pAnchoredWidget : ct_tree_iter->get_anchored_widgets(start_offset, end_offset)) {
-            if (!pAnchoredWidget->to_sqlite(_pDb, node_id, start_offset >= 0 ? -start_offset : 0, storage_cache))
-                throw std::runtime_error("couldn't save widget");
-            switch (pAnchoredWidget->get_type()) {
-                case CtAnchWidgType::CodeBox: has_codebox = true; break;
-                case CtAnchWidgType::TableLight:
-                case CtAnchWidgType::TableHeavy: has_table = true; break;
-                default: has_image = true;
+    bool has_codebox{false};
+    bool has_table{false};
+    bool has_image{false};
+    if (node_state.buff) {
+        if (node_state.is_update_of_existing and ((is_richtxt & 0x01) or node_state.prop)) {
+            // if it's a rich text or has property changed (maybe was a rich text) clear old widgets
+            _exec_bind_int64(TABLE_CODEBOX_DELETE, node_id);
+            _exec_bind_int64(TABLE_TABLE_DELETE, node_id);
+            _exec_bind_int64(TABLE_IMAGE_DELETE, node_id);
+        }
+        if (is_richtxt & 0x01) {
+            for (CtAnchoredWidget* pAnchoredWidget : ct_tree_iter->get_anchored_widgets(start_offset, end_offset)) {
+                if (not pAnchoredWidget->to_sqlite(_pDb, node_id, start_offset >= 0 ? -start_offset : 0, storage_cache))
+                    throw std::runtime_error("couldn't save widget");
+                switch (pAnchoredWidget->get_type()) {
+                    case CtAnchWidgType::CodeBox: has_codebox = true; break;
+                    case CtAnchWidgType::TableLight: [[fallthrough]];
+                    case CtAnchWidgType::TableHeavy: has_table = true; break;
+                    default: has_image = true;
+                }
             }
         }
     }
 
     // if only node prop to write
-    if (node_state.prop && !node_state.buff) {
+    if (node_state.prop and not node_state.buff) {
         Sqlite3StmtAuto stmt{_pDb, "UPDATE node SET name=?, syntax=?, tags=?, is_ro=?, is_richtxt=?, level=? WHERE node_id=?"};
-        if (stmt.is_bad())
+        if (stmt.is_bad()) {
             throw std::runtime_error(ERR_SQLITE_PREPV2 + sqlite3_errmsg(_pDb));
-
+        }
         const std::string node_name = ct_tree_iter->get_node_name();
         const std::string node_syntax = ct_tree_iter->get_node_syntax_highlighting();
         const std::string node_tags = ct_tree_iter->get_node_tags();
@@ -713,8 +716,9 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
         sqlite3_bind_int64(stmt, 5, is_richtxt);
         sqlite3_bind_int64(stmt, 6, exclude_from_search);
         sqlite3_bind_int64(stmt, 7, node_id);
-        if (sqlite3_step(stmt) != SQLITE_DONE)
+        if (sqlite3_step(stmt) != SQLITE_DONE) {
             throw std::runtime_error(ERR_SQLITE_STEP + sqlite3_errmsg(_pDb));
+        }
     }
     // write node buffer and node prop too
     else if (node_state.buff) {
@@ -832,7 +836,7 @@ void CtStorageSqlite::_exec_bind_int64(const char* sqlCmd, const gint64 bind_int
 void CtStorageSqlite::import_nodes(const fs::path& path, const Gtk::TreeIter& parent_iter)
 {
     _open_db(path); // storage is temp so can just open db
-    if (!_check_database_integrity()) return;
+    if (not _check_database_integrity()) return;
 
     std::function<void(gint64, const gint64, Gtk::TreeIter)> add_node_func;
     add_node_func = [this, &add_node_func](gint64 nodeId, const gint64 sequence, Gtk::TreeIter parent_iter) {
