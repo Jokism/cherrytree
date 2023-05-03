@@ -652,12 +652,6 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
         exclude_from_search |= 0x02;
     }
 
-    // TODO COMPLETE REVIEW REMOVE THIS DECOUPLED remove_prev_node
-    const bool remove_prev_node = node_state.is_update_of_existing and node_state.buff and node_state.prop;
-    if (remove_prev_node) {
-        _exec_bind_int64(TABLE_NODE_DELETE, node_id);
-    }
-
     // write hier
     if (node_state.hier) {
         if (node_state.is_update_of_existing) {
@@ -700,7 +694,7 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
         }
     }
 
-    // if only node prop to write
+    // if only node prop to write / no buffer
     if (node_state.prop and not node_state.buff) {
         Sqlite3StmtAuto stmt{_pDb, "UPDATE node SET name=?, syntax=?, tags=?, is_ro=?, is_richtxt=?, level=? WHERE node_id=?"};
         if (stmt.is_bad()) {
@@ -720,7 +714,7 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
             throw std::runtime_error(ERR_SQLITE_STEP + sqlite3_errmsg(_pDb));
         }
     }
-    // write node buffer and node prop too
+    // write node buffer (with or without node prop)
     else if (node_state.buff) {
         // get buffer content
         std::string node_txt;
@@ -743,10 +737,13 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
 
         // full node rewrite (buf + prop)
         if (node_state.prop) {
+            if (node_state.is_update_of_existing) {
+                _exec_bind_int64(TABLE_NODE_DELETE, node_id);
+            }
             Sqlite3StmtAuto stmt{_pDb, TABLE_NODE_INSERT};
-            if (stmt.is_bad())
+            if (stmt.is_bad()) {
                 throw std::runtime_error(ERR_SQLITE_PREPV2 + sqlite3_errmsg(_pDb));
-
+            }
             const std::string node_name = ct_tree_iter->get_node_name();
             const std::string node_syntax = ct_tree_iter->get_node_syntax_highlighting();
             const std::string node_tags = ct_tree_iter->get_node_tags();
@@ -763,15 +760,16 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
             sqlite3_bind_int64(stmt, 11, exclude_from_search);
             sqlite3_bind_int64(stmt, 12, ct_tree_iter->get_node_creating_time());
             sqlite3_bind_int64(stmt, 13, ct_tree_iter->get_node_modification_time());
-            if (sqlite3_step(stmt) != SQLITE_DONE)
+            if (sqlite3_step(stmt) != SQLITE_DONE) {
                 throw std::runtime_error(ERR_SQLITE_STEP + sqlite3_errmsg(_pDb));
+            }
         }
         // only node buff rewrite
         else {
             Sqlite3StmtAuto stmt{_pDb, "UPDATE node SET txt=?, syntax=?, is_richtxt=?, has_codebox=?, has_table=?, has_image=?, ts_lastsave=? WHERE node_id=?"};
-            if (stmt.is_bad())
+            if (stmt.is_bad()) {
                 throw std::runtime_error(ERR_SQLITE_PREPV2 + sqlite3_errmsg(_pDb));
-
+            }
             const std::string node_syntax = ct_tree_iter->get_node_syntax_highlighting();
             sqlite3_bind_text(stmt, 1, node_txt.c_str(), node_txt.size(), SQLITE_STATIC);
             sqlite3_bind_text(stmt, 2, node_syntax.c_str(), node_syntax.size(), SQLITE_STATIC);
@@ -781,8 +779,9 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
             sqlite3_bind_int64(stmt, 6, has_image);
             sqlite3_bind_int64(stmt, 7, ct_tree_iter->get_node_modification_time());
             sqlite3_bind_int64(stmt, 8, node_id);
-            if (sqlite3_step(stmt) != SQLITE_DONE)
+            if (sqlite3_step(stmt) != SQLITE_DONE) {
                 throw std::runtime_error(ERR_SQLITE_STEP + sqlite3_errmsg(_pDb));
+            }
         }
     }
 }
@@ -790,14 +789,14 @@ void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
 std::list<gint64> CtStorageSqlite::_get_children_node_ids_from_db(gint64 father_id)
 {
     Sqlite3StmtAuto stmt{_pDb, "SELECT node_id FROM children WHERE father_id=? ORDER BY sequence ASC"};
-    if (stmt.is_bad())
+    if (stmt.is_bad()) {
         throw std::runtime_error(ERR_SQLITE_PREPV2 + sqlite3_errmsg(_pDb));
-
+    }
     std::list<gint64> node_children;
     sqlite3_bind_int64(stmt, 1, father_id);
-    while (sqlite3_step(stmt) == SQLITE_ROW)
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
         node_children.push_back(sqlite3_column_int64(stmt, 0));
-
+    }
     return node_children;
 }
 
@@ -809,13 +808,14 @@ void CtStorageSqlite::_remove_db_node_with_children(const gint64 node_id)
     _exec_bind_int64(TABLE_NODE_DELETE, node_id);
     _exec_bind_int64(TABLE_CHILDREN_DELETE, node_id);
 
-    for (const gint64 child_node_id: _get_children_node_ids_from_db(node_id))
+    for (const gint64 child_node_id : _get_children_node_ids_from_db(node_id)) {
         _remove_db_node_with_children(child_node_id);
+    }
 }
 
 void CtStorageSqlite::_exec_no_callback(const char* sqlCmd)
 {
-    char *p_err_msg{nullptr};
+    char* p_err_msg{nullptr};
     if (SQLITE_OK != sqlite3_exec(_pDb, sqlCmd, nullptr, nullptr, &p_err_msg)) {
         std::string msg = std::string("!! sqlite3 '") + sqlCmd + "': " + p_err_msg;
         sqlite3_free(p_err_msg);
@@ -826,11 +826,13 @@ void CtStorageSqlite::_exec_no_callback(const char* sqlCmd)
 void CtStorageSqlite::_exec_bind_int64(const char* sqlCmd, const gint64 bind_int64)
 {
     Sqlite3StmtAuto stmt{_pDb, sqlCmd};
-    if (stmt.is_bad())
+    if (stmt.is_bad()) {
         throw std::runtime_error(ERR_SQLITE_PREPV2 + sqlite3_errmsg(_pDb));
+    }
     sqlite3_bind_int64(stmt, 1, bind_int64);
-    if (sqlite3_step(stmt) != SQLITE_DONE)
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
         throw std::runtime_error(ERR_SQLITE_STEP + sqlite3_errmsg(_pDb));
+    }
 }
 
 void CtStorageSqlite::import_nodes(const fs::path& path, const Gtk::TreeIter& parent_iter)
