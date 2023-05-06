@@ -70,6 +70,7 @@ private:
 
     fs::path _get_node_dirpath(const gint64 node_id);
     void _remove_disk_node_with_children(const gint64 node_id);
+    void _hier_try_move_node(const fs::path& dir_path);
     void _write_bookmarks_to_disk(const std::list<gint64>& bookmarks_list);
     bool _nodes_to_multifile(CtTreeIter* ct_tree_iter,
                              const fs::path& parent_dir_path,

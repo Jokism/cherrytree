@@ -130,6 +130,7 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
                 _write_bookmarks_to_disk(_pCtMainWin->get_tree_store().bookmarks_get());
             }
             // update changed nodes
+            // TODO sort by level ASC + port this also to SQLite
             for (const auto& node_pair : syncPending.nodes_to_write_dict) {
                 CtTreeIter ct_tree_iter = _pCtMainWin->get_tree_store().get_node_from_node_id(node_pair.first);
                 CtTreeIter ct_tree_iter_parent = ct_tree_iter.parent();
@@ -143,6 +144,7 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
                                     -1);
             }
             // remove nodes and their sub nodes
+            // TODO sort by level DESC + port this also to SQLite
             for (const auto node_id : syncPending.nodes_to_rm_set) {
                 _remove_disk_node_with_children(node_id);
             }
@@ -186,6 +188,32 @@ void CtStorageMultiFile::_write_bookmarks_to_disk(const std::list<gint64>& bookm
     }
 }
 
+void CtStorageMultiFile::_hier_try_move_node(const fs::path& dir_path_to)
+{
+    const fs::path dir_name = dir_path_to.filename();
+    fs::path dir_path_from;
+    std::function<void(const fs::path parent_path)> f_find_dir_from = [&](const fs::path parent_path){
+        for (const fs::path& p : fs::get_dir_entries(parent_path)) {
+            if (not dir_path_from.empty()) {
+                return;
+            }
+            if (fs::is_directory(p)) {
+                if (p.filename() == dir_name) {
+                    dir_path_from = p;
+                }
+                else {
+                    f_find_dir_from(p);
+                }
+            }
+        }
+    };
+    f_find_dir_from(_dir_path);
+    if (not dir_path_from.empty()) {
+        spdlog::debug("{} -> {}", dir_path_from, dir_path_to);
+        fs::move_file(dir_path_from, dir_path_to);
+    }
+}
+
 bool CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
                                              const fs::path& dir_path,
                                              Glib::ustring& error,
@@ -195,6 +223,12 @@ bool CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
                                              const int start_offset/*= 0*/,
                                              const int end_offset/*=-1*/)
 {
+    if (CtExporting::NONESAVE == exporting and
+        node_state.hier and
+        not fs::is_directory(dir_path))
+    {
+        _hier_try_move_node(dir_path);
+    }
     // TODO support CtExporting::NONESAVE and node_state
     if (g_mkdir(dir_path.c_str(), 0755) < 0) {
         error = Glib::ustring{"failed to create "} + dir_path.string();
