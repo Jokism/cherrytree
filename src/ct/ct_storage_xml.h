@@ -87,7 +87,7 @@ public:
      : _pCtMainWin{pCtMainWin}
     {}
 
-    xmlpp::Element* node_to_xml(CtTreeIter* ct_tree_iter,
+    xmlpp::Element* node_to_xml(const CtTreeIter* ct_tree_iter,
                                 xmlpp::Element* p_node_parent,
                                 const std::string& multifile_dir,
                                 CtStorageCache* storage_cache,

@@ -179,6 +179,46 @@
     }
 }
 
+/*static*/std::list<std::pair<CtTreeIter, CtStorageNodeState>> CtStorageControl::get_sorted_by_level_nodes_to_write(
+    CtTreeStore* pCtTreeStore,
+    const std::unordered_map<gint64, CtStorageNodeState>& nodes_to_write_dict)
+{
+    std::list<std::pair<CtTreeIter, CtStorageNodeState>> ret_list;
+    for (const auto& curr_pair : nodes_to_write_dict) {
+        CtTreeIter ctTreeIter = pCtTreeStore->get_node_from_node_id(curr_pair.first);
+        if (ctTreeIter) {
+            ret_list.push_back(std::make_pair(ctTreeIter, curr_pair.second));
+        }
+    }
+    auto pStore = pCtTreeStore->get_store();
+    auto f_customCompare = [pStore](const std::pair<CtTreeIter, CtStorageNodeState>& a, const std::pair<CtTreeIter, CtStorageNodeState>& b)->bool{
+        // sort root to leaves
+        return pStore->iter_depth(a.first) < pStore->iter_depth(b.first);
+    };
+    ret_list.sort(f_customCompare);
+    return ret_list;
+}
+
+/*static*/std::list<CtTreeIter> CtStorageControl::get_sorted_by_level_nodes_to_remove(
+    CtTreeStore* pCtTreeStore,
+    const std::set<gint64>& nodes_to_rm_set)
+{
+    std::list<CtTreeIter> ret_list;
+    for (const gint64 curr_id : nodes_to_rm_set) {
+        CtTreeIter ctTreeIter = pCtTreeStore->get_node_from_node_id(curr_id);
+        if (ctTreeIter) {
+            ret_list.push_back(ctTreeIter);
+        }
+    }
+    auto pStore = pCtTreeStore->get_store();
+    auto f_customCompare = [pStore](const CtTreeIter& a, const CtTreeIter& b)->bool{
+        // sort leaves to root
+        return pStore->iter_depth(a) > pStore->iter_depth(b);
+    };
+    ret_list.sort(f_customCompare);
+    return ret_list;
+}
+
 bool CtStorageControl::save(bool need_vacuum, Glib::ustring &error)
 {
     _mod_time = 0;

@@ -28,6 +28,7 @@
 #include <thread>
 
 class CtMainWin;
+class CtTreeStore;
 class CtStorageControl
 {
 public:
@@ -46,6 +47,13 @@ public:
     static bool document_integrity_check_pass(CtMainWin* pCtMainWin,
                                               const fs::path& file_path,
                                               Glib::ustring& error);
+
+    static std::list<std::pair<CtTreeIter, CtStorageNodeState>> get_sorted_by_level_nodes_to_write(
+        CtTreeStore* pCtTreeStore,
+        const std::unordered_map<gint64, CtStorageNodeState>& nodes_to_write_dict);
+    static std::list<CtTreeIter> get_sorted_by_level_nodes_to_remove(
+        CtTreeStore* pCtTreeStore,
+        const std::set<gint64>& nodes_to_rm_set);
 
     virtual ~CtStorageControl();
 

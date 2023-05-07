@@ -275,7 +275,7 @@ void CtStorageXml::_nodes_to_xml(CtTreeIter* ct_tree_iter,
     return parser;
 }
 
-xmlpp::Element* CtStorageXmlHelper::node_to_xml(CtTreeIter* ct_tree_iter,
+xmlpp::Element* CtStorageXmlHelper::node_to_xml(const CtTreeIter* ct_tree_iter,
                                                 xmlpp::Element* p_node_parent,
                                                 const std::string& multifile_dir,
                                                 CtStorageCache* storage_cache,

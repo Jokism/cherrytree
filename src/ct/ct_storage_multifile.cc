@@ -130,11 +130,10 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
                 _write_bookmarks_to_disk(_pCtMainWin->get_tree_store().bookmarks_get());
             }
             // update changed nodes
-            // TODO sort by level ASC + port this also to SQLite
-            for (const auto& node_pair : syncPending.nodes_to_write_dict) {
-                CtTreeIter ct_tree_iter = _pCtMainWin->get_tree_store().get_node_from_node_id(node_pair.first);
-                CtTreeIter ct_tree_iter_parent = ct_tree_iter.parent();
-                _nodes_to_multifile(&ct_tree_iter,
+            const std::list<std::pair<CtTreeIter, CtStorageNodeState>> nodes_to_write = CtStorageControl::get_sorted_by_level_nodes_to_write(
+                &_pCtMainWin->get_tree_store(), syncPending.nodes_to_write_dict);
+            for (const auto& node_pair : nodes_to_write) {
+                _nodes_to_multifile(&node_pair.first,
                                     _get_node_dirpath(node_pair.first),
                                     error,
                                     &storage_cache,
@@ -144,9 +143,10 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
                                     -1);
             }
             // remove nodes and their sub nodes
-            // TODO sort by level DESC + port this also to SQLite
-            for (const auto node_id : syncPending.nodes_to_rm_set) {
-                _remove_disk_node_with_children(node_id);
+            const std::list<CtTreeIter> nodes_to_remove = CtStorageControl::get_sorted_by_level_nodes_to_remove(
+                &_pCtMainWin->get_tree_store(), syncPending.nodes_to_rm_set);
+            for (const CtTreeIter& ct_tree_iter : nodes_to_remove) {
+                _remove_disk_node_with_children(ct_tree_iter);
             }
         }
         return true;
@@ -157,14 +157,10 @@ bool CtStorageMultiFile::save_treestore(const fs::path& dir_path,
     }
 }
 
-fs::path CtStorageMultiFile::_get_node_dirpath(const gint64 node_id)
+fs::path CtStorageMultiFile::_get_node_dirpath(const CtTreeIter ct_tree_iter)
 {
-    CtTreeIter tree_iter = _pCtMainWin->get_tree_store().get_node_from_node_id(node_id);
-    if (not tree_iter) {
-        return fs::path{};
-    }
-    fs::path hierarchical_path{std::to_string(node_id)};
-    CtTreeIter father_iter = tree_iter.parent();
+    fs::path hierarchical_path{std::to_string(ct_tree_iter.get_node_id())};
+    CtTreeIter father_iter = ct_tree_iter.parent();
     while (father_iter) {
         hierarchical_path = fs::path{std::to_string(father_iter.get_node_id())} / hierarchical_path;
         father_iter = father_iter.parent();
@@ -172,9 +168,9 @@ fs::path CtStorageMultiFile::_get_node_dirpath(const gint64 node_id)
     return _dir_path / hierarchical_path;
 }
 
-void CtStorageMultiFile::_remove_disk_node_with_children(const gint64 node_id)
+void CtStorageMultiFile::_remove_disk_node_with_children(const CtTreeIter ct_tree_iter)
 {
-    const fs::path node_dirpath = _get_node_dirpath(node_id);
+    const fs::path node_dirpath = _get_node_dirpath(ct_tree_iter);
     (void)fs::remove_all(node_dirpath);
 }
 
@@ -214,7 +210,7 @@ void CtStorageMultiFile::_hier_try_move_node(const fs::path& dir_path_to)
     }
 }
 
-bool CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
+bool CtStorageMultiFile::_nodes_to_multifile(const CtTreeIter* ct_tree_iter,
                                              const fs::path& dir_path,
                                              Glib::ustring& error,
                                              CtStorageCache* storage_cache,
@@ -225,6 +221,7 @@ bool CtStorageMultiFile::_nodes_to_multifile(CtTreeIter* ct_tree_iter,
 {
     if (CtExporting::NONESAVE == exporting and
         node_state.hier and
+        node_state.is_update_of_existing and
         not fs::is_directory(dir_path))
     {
         _hier_try_move_node(dir_path);

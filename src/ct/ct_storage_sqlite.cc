@@ -335,15 +335,18 @@ bool CtStorageSqlite::save_treestore(const fs::path& file_path,
                 _write_bookmarks_to_db(_pCtMainWin->get_tree_store().bookmarks_get());
             }
             // update changed nodes
-            for (const auto& node_pair : syncPending.nodes_to_write_dict) {
-                CtTreeIter ct_tree_iter = _pCtMainWin->get_tree_store().get_node_from_node_id(node_pair.first);
-                CtTreeIter ct_tree_iter_parent = ct_tree_iter.parent();
-                _write_node_to_db(&ct_tree_iter, ct_tree_iter.get_node_sequence(),
+            const std::list<std::pair<CtTreeIter, CtStorageNodeState>> nodes_to_write = CtStorageControl::get_sorted_by_level_nodes_to_write(
+                &_pCtMainWin->get_tree_store(), syncPending.nodes_to_write_dict);
+            for (const auto& node_pair : nodes_to_write) {
+                CtTreeIter ct_tree_iter_parent = node_pair.first.parent();
+                _write_node_to_db(&node_pair.first, node_pair.first.get_node_sequence(),
                                   ct_tree_iter_parent ? ct_tree_iter_parent.get_node_id() : 0, node_pair.second, 0, -1, &storage_cache);
             }
             // remove nodes and their sub nodes
-            for (const auto node_id : syncPending.nodes_to_rm_set) {
-                _remove_db_node_with_children(node_id);
+            const std::list<CtTreeIter> nodes_to_remove = CtStorageControl::get_sorted_by_level_nodes_to_remove(
+                &_pCtMainWin->get_tree_store(), syncPending.nodes_to_rm_set);
+            for (const CtTreeIter& ct_tree_iter : nodes_to_remove) {
+                _remove_db_node_with_children(ct_tree_iter.get_node_id());
             }
         }
         return true;
@@ -461,7 +464,7 @@ Glib::RefPtr<Gsv::Buffer> CtStorageSqlite::get_delayed_text_buffer(const gint64&
         if (sqlite3_column_int64(stmt, 2)) _table_from_db(node_id, widgets);
         if (sqlite3_column_int64(stmt, 3)) _image_from_db(node_id, widgets);
 
-        widgets.sort([](CtAnchoredWidget* w1, CtAnchoredWidget* w2) { return w1->getOffset() < w2->getOffset(); });
+        widgets.sort([](const CtAnchoredWidget* w1, const CtAnchoredWidget* w2) { return w1->getOffset() < w2->getOffset(); });
         rRetTextBuffer->begin_not_undoable_action();
         for (auto widget : widgets) {
             widget->insertInTextBuffer(rRetTextBuffer);
@@ -625,7 +628,7 @@ void CtStorageSqlite::_write_bookmarks_to_db(const std::list<gint64>& bookmarks)
     }
 }
 
-void CtStorageSqlite::_write_node_to_db(CtTreeIter* ct_tree_iter,
+void CtStorageSqlite::_write_node_to_db(const CtTreeIter* ct_tree_iter,
                                         const gint64 sequence,
                                         const gint64 node_father_id,
                                         const CtStorageNodeState& node_state,
