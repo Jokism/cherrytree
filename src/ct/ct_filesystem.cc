@@ -1,7 +1,7 @@
 /*
   ct_filesystem.cc
  *
- * Copyright 2009-2022
+ * Copyright 2009-2023
  * Giuseppe Penone <giuspen@gmail.com>
  * Evgenii Gurianov <https://github.com/txe>
  *
@@ -344,11 +344,13 @@ std::uintmax_t remove_all(const path& dir)
 {
     std::uintmax_t count = 0;
     for (const auto& file : get_dir_entries(dir)) {
-        ++count;
         if (is_directory(file)) {
             count += remove_all(file);
         }
-        remove(file);
+        else {
+            ++count;
+            remove(file);
+        }
     }
     remove(dir);
     ++count;
